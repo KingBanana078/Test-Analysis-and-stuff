@@ -8,7 +8,7 @@ from scipy.spatial import Delaunay, SphericalVoronoi, geometric_slerp
 from mpl_toolkits.mplot3d import proj3d
 
 
-with open('csv') as csvfile:
+with open('csv.csv') as csvfile:
     reader = csv.reader(csvfile)
     hot_spots_data = list(reader)
 
