@@ -17,6 +17,10 @@ hot_spots_data = np.array(hot_spots_data, dtype=float)
 longitude = hot_spots_data[:, 1]
 latitude = hot_spots_data[:, 0]
 
+for item in longitude:
+    if item > 180:
+        item = item - 360
+
 """triangulations = Delaunay(hot_spots_data)
 
 plt.triplot(hot_spots_data[:, 0], hot_spots_data[:, 1], triangulations.simplices)
@@ -31,8 +35,7 @@ theta = hot_spots_data[:, 0]
 phi = hot_spots_data[:, 1]
 r = np.ones(343)
 
-plt.scatter(theta, phi)
-plt.show
+
 
 
 for i in range(343):
