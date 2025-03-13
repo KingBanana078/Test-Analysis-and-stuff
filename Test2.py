@@ -36,7 +36,6 @@ for i in range(len(theta)):
         value = theta[i]-360
         theta[i]=value
 
-print (theta, phi)
 
 for i in range(343):
     x.append(float((r[i]*math.cos(theta[i])*math.sin(phi[i]))))
@@ -47,10 +46,9 @@ point = []
 for k in range(343):
     point.append([x[k], y[k], z[k]])
 
-print(point)
-
+long, lat = np.meshgrid(longitude, latitude)
 fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
+ax = fig.add_subplot(111, projection='mollweide')
 
-ax.scatter(x, y, z)
-plt.show
+ax.scatter(theta/180*math.pi, phi/180*math.pi)
+plt.show()
