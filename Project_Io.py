@@ -101,7 +101,7 @@ from scipy.interpolate import Rbf
 centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
 
 # Normalize centroids to lie on the unit sphere
-centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
+#centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 
 # Define density as inverse of area (higher area = lower density)
 densities = 1 / areas**0.5
