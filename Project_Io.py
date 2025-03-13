@@ -35,7 +35,6 @@ for i in range(len(theta)):
     if theta[i]> 180:
         value = theta[i]-360
         theta[i]=value
-    
 plt.scatter(theta, phi)
 plt.show
 
@@ -99,24 +98,23 @@ areas = sv.calculate_areas()
 
 
 
-from scipy.interpolate import Rbf
 
 # Compute centroids of Voronoi regions
 centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
 
 # Normalize centroids to lie on the unit sphere
-#centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
+centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 
 # Define density as inverse of area (higher area = lower density)
 densities = 1 / areas
 
 # Create interpolation function (RBF) using centroids
-rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic', smooth = 0.1)
-
+rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic', smooth = .1)
+print(rbf)
 # Generate grid for visualization
 num_grid = 360
-grid_phi = np.linspace(-np.pi, np.pi, num_grid)
-grid_theta = np.linspace(-np.pi/2, np.pi/2, num_grid)
+grid_theta = np.linspace(-np.pi, np.pi, num_grid)
+grid_phi = np.linspace(-np.pi/2, np.pi/2, num_grid)
 phi_grid, theta_grid = np.meshgrid(grid_phi, grid_theta)
 x_grid = np.sin(theta_grid) * np.cos(phi_grid)
 y_grid = np.sin(theta_grid) * np.sin(phi_grid)
@@ -127,7 +125,7 @@ density_grid = rbf(x_grid, y_grid, z_grid)
 
 # Plot the density map
 plt.figure(figsize=(10, 5))
-plt.pcolormesh(phi_grid, theta_grid, density_grid, shading='auto', cmap='viridis')
+plt.pcolormesh(np.linspace(-180, 180, num_grid), np.linspace(-90, 90, num_grid), density_grid, shading='auto', cmap='viridis')
 plt.colorbar(label='Density')
 plt.xlabel('Longitude')
 plt.ylabel('Latitude')
