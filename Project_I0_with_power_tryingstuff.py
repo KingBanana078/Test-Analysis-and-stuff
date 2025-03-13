@@ -19,8 +19,13 @@ latitude = hot_spots_data[:, 0]
 x = []
 y = []
 z = []
-theta = hot_spots_data[:, 0]  # Latitude
-phi = hot_spots_data[:, 1]  # Longitude
+theta = hot_spots_data[:, 1]  # Latitude
+for i in range(len(theta)):
+    if theta[i]> 180:
+        value = theta[i]-360
+        theta[i]=value
+
+phi = hot_spots_data[:, 0]  # Longitude
 r = np.ones(343)  # Assume the radius is 1 (unit sphere)
 
 # Convert spherical to Cartesian coordinates

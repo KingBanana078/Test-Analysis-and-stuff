@@ -111,7 +111,7 @@ centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regi
 densities = 1 / areas
 
 # Create interpolation function (RBF) using centroids
-rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic')
+rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic', smooth = 0.1)
 
 # Generate grid for visualization
 num_grid = 360
