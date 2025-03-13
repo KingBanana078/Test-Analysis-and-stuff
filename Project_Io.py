@@ -31,7 +31,12 @@ theta = hot_spots_data[:, 0]
 phi = hot_spots_data[:, 1]
 r = np.ones(343)
 
-plt.scatter(theta, phi)
+for i in range(len(phi)):
+    if phi[i]> 180:
+        value = phi[i]-360
+        phi[i]=value
+    
+plt.scatter(phi, theta)
 plt.show
 
 
