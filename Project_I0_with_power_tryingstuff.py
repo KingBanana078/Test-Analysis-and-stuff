@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial import SphericalVoronoi, geometric_slerp
 from scipy.interpolate import Rbf
 
+R_Io = 1821600
 # Read the position data (latitude, longitude) from Positiondata.csv
 with open('Positiondata.csv') as csvfile:
     reader = csv.reader(csvfile)
@@ -19,8 +20,8 @@ latitude = hot_spots_data[:, 0]
 x = []
 y = []
 z = []
-theta = hot_spots_data[:, 0]  # Latitude
-phi = hot_spots_data[:, 1]  # Longitude
+phi = hot_spots_data[:, 0]  # Latitude
+theta = hot_spots_data[:, 1]  # Longitude
 r = np.ones(343)  # Assume the radius is 1 (unit sphere)
 
 # Convert spherical to Cartesian coordinates
@@ -43,6 +44,11 @@ sv = SphericalVoronoi(points, radius, center)
 
 # Sort vertices (optional, helpful for plotting)
 sv.sort_vertices_of_regions()
+
+# Calculate the areas of the Voronoi regions
+areas = sv.calculate_areas()
+
+
 
 # Prepare for plotting the Voronoi diagram
 t_vals = np.linspace(0, 1, 2000)
@@ -72,15 +78,32 @@ for region in sv.regions:
         result = geometric_slerp(start, end, t_vals)
         ax.plot(result[..., 0], result[..., 1], result[..., 2], c='k')
 
-# Calculate the areas of the Voronoi regions
-areas = sv.calculate_areas()
-
 # Read the power data (in Watts) from Powerdata.csv
-power_data = []
+power_data, area_data = [], []
 with open('power.csv') as power:
     reader = csv.reader(power)
-    for row in reader:
-        power_data.append(float(row[0]))  # Assuming one value per row (343 rows total)
+    powerandarea = list(reader)
+
+for i in range(len(powerandarea)): 
+    for j in range(len(powerandarea[i])):
+        powerandarea[i][j]=float(powerandarea[i][j])
+
+for row in powerandarea:
+    if row[1] !=  0.0:
+        power_data.append(float(row[0])) 
+        area_data.append(float(row[1]))
+
+print(powerandarea)
+
+
+    
+#areas_s=area_data
+#print(areas_s)
+
+'''
+#total_surface_area = 4*np.pi
+#areas_in_m2 = area_data * total_surface_area
+#scaled_areas = areas_in_m2 * (R_Io**2)
 
 # Convert the power data into a numpy array
 power_data = np.array(power_data)  # Already in Watts (W)
@@ -121,3 +144,4 @@ fig.colorbar(scatter, ax=ax, label='Power (W)', shrink=0.5, aspect=5)
 
 # Show the plot
 plt.show()
+'''
