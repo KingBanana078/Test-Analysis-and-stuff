@@ -27,16 +27,16 @@ x = []
 y = []
 z = []
 
-theta = hot_spots_data[:, 0]
-phi = hot_spots_data[:, 1]
+theta = hot_spots_data[:, 1]
+phi = hot_spots_data[:, 0]
 r = np.ones(343)
 
-for i in range(len(phi)):
-    if phi[i]> 180:
-        value = phi[i]-360
-        phi[i]=value
+for i in range(len(theta)):
+    if theta[i]> 180:
+        value = theta[i]-360
+        theta[i]=value
     
-plt.scatter(phi, theta)
+plt.scatter(theta, phi)
 plt.show
 
 
