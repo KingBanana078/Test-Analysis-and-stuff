@@ -107,7 +107,7 @@ centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 densities = 1 / areas**0.5
 
 # Create interpolation function (RBF) using centroids
-rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
+rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic')
 
 # Generate grid for visualization
 num_grid = 360
