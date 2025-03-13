@@ -35,9 +35,8 @@ for i in range(len(theta)):
     if theta[i]> 180:
         value = theta[i]-360
         theta[i]=value
-plt.scatter(theta, phi)
-plt.show
 
+print (theta, phi)
 
 for i in range(343):
     x.append(float((r[i]*math.cos(theta[i])*math.sin(phi[i]))))
@@ -49,3 +48,9 @@ for k in range(343):
     point.append([x[k], y[k], z[k]])
 
 print(point)
+
+fig = plt.figure()
+ax = fig.add_subplot(projection='3d')
+
+ax.scatter(x, y, z)
+plt.show
