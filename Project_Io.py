@@ -14,8 +14,8 @@ with open('Positiondata.csv') as csvfile:
 
 hot_spots_data = np.array(hot_spots_data, dtype=float)
 
-longitude = hot_spots_data[:, 0]
-latitude = hot_spots_data[:, 1]
+longitude = hot_spots_data[:, 1]
+latitude = hot_spots_data[:, 0]
 
 """triangulations = Delaunay(hot_spots_data)
 
@@ -96,13 +96,13 @@ from scipy.interpolate import Rbf
 centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
 
 # Normalize centroids to lie on the unit sphere
-centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
+#centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 
 # Define density as inverse of area (higher area = lower density)
 densities = 1 / areas
 
 # Create interpolation function (RBF) using centroids
-rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
+rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic')
 
 # Generate grid for visualization
 num_grid = 360
