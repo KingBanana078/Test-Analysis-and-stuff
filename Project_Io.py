@@ -90,11 +90,6 @@ areas = sv.calculate_areas()
 
 
 
-
-
-
-
-
 from scipy.interpolate import Rbf
 
 # Compute centroids of Voronoi regions
