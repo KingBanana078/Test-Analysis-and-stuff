@@ -104,7 +104,7 @@ centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regi
 centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 
 # Define density as inverse of area (higher area = lower density)
-densities = 1 / areas
+densities = 1 / areas**0.5
 
 # Create interpolation function (RBF) using centroids
 rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
