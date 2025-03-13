@@ -31,6 +31,10 @@ theta = hot_spots_data[:, 0]
 phi = hot_spots_data[:, 1]
 r = np.ones(343)
 
+plt.scatter(theta, phi)
+plt.show
+
+
 for i in range(343):
     x.append(float((r[i]*math.cos(theta[i])*math.sin(phi[i]))))
     y.append(float((r[i]*math.sin(theta[i])*math.sin(phi[i]))))
