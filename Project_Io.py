@@ -14,8 +14,8 @@ with open('Positiondata.csv') as csvfile:
 
 hot_spots_data = np.array(hot_spots_data, dtype=float)
 
-longitude = hot_spots_data[:, 0]
-latitude = hot_spots_data[:, 1]
+longitude = hot_spots_data[:, 1]
+latitude = hot_spots_data[:, 0]
 
 """triangulations = Delaunay(hot_spots_data)
 
