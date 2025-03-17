@@ -1,1 +1,12 @@
 from scipy.special import sph_harm
+import numpy as np
+
+
+n = np.arange(0, 100, 1)
+m = np.arange(0, 100, 1)
+
+print(n, m)
+
+
+
+sph_harm()
