@@ -38,7 +38,9 @@ r = np.ones(343)
 for i in range(len(theta)):
     value = 180-theta[i]
     theta[i]=value
-
+for i in range(len(theta)):
+    value = 90-phi[i]
+    phi[i]=value
 
 for i in range(343):
     x.append(float((r[i]*np.cos(theta[i]/180*np.pi)*np.sin(phi[i]/180*np.pi))))
@@ -50,9 +52,9 @@ for k in range(343):
 
 long, lat = np.meshgrid(longitude, latitude)
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-#ax.scatter(theta/180*math.pi, phi/180*math.pi)
+ax = fig.add_subplot(111, projection='mollweide')
+ax.scatter(theta/180*math.pi, phi/180*math.pi)
 points = np.array(point)
-ax.scatter(points[:, 0], points[:, 1], points[:, 2], c='b')
+
+#ax.scatter(points[:, 0], points[:, 1], points[:, 2], c='b')
 plt.show()

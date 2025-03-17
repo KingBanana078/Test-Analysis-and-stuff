@@ -34,6 +34,9 @@ r = np.ones(343)
 for i in range(len(theta)):
     value = 180-theta[i]
     theta[i]=value
+for i in range(len(theta)):
+    value = 90-phi[i]
+    phi[i]=value
 
 
 plt.scatter(theta, phi)
