@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot  as plt
 import math
 
+
 from scipy.interpolate import Rbf
 from scipy.spatial import Delaunay, SphericalVoronoi, geometric_slerp
 from mpl_toolkits.mplot3d import proj3d
@@ -31,18 +32,23 @@ theta = hot_spots_data[:, 1]
 phi = hot_spots_data[:, 0]
 r = np.ones(343)
 
+theta_prime = 180-theta
+plt.scatter(theta_prime, phi)
+plt.show()
+
 for i in range(len(theta)):
-    if theta[i]> 180:
-        value = theta[i]-360
-        theta[i]=value
-plt.scatter(theta, phi)
-plt.show
+    value = 180-theta[i]
+    theta[i]=value
+for i in range(len(theta)):
+    value = 90-phi[i]
+    phi[i]=value
+
 
 
 for i in range(343):
-    x.append(float((r[i]*math.cos(theta[i])*math.sin(phi[i]))))
-    y.append(float((r[i]*math.sin(theta[i])*math.sin(phi[i]))))
-    z.append(float((r[i]*math.cos(phi[i]))))
+    x.append(float((r[i]*np.cos(theta[i]/180*np.pi)*np.sin(phi[i]/180*np.pi))))
+    y.append(float((r[i]*np.sin(theta[i]/180*np.pi)*np.sin(phi[i]/180*np.pi))))
+    z.append(float((r[i]*np.cos(phi[i]/180*np.pi))))
 
 point = []
 for k in range(343):
@@ -55,7 +61,6 @@ points = np.array(point)
 radius = 1
 center = np.array([0, 0, 0])
 sv = SphericalVoronoi(points, radius, center)
-
 # sort vertices (optional, helpful for plotting)
 sv.sort_vertices_of_regions()
 t_vals = np.linspace(0, 1, 2000)
@@ -73,6 +78,10 @@ ax.scatter(points[:, 0], points[:, 1], points[:, 2], c='b')
 # plot Voronoi vertices
 ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2],
                    c='g')
+
+
+
+
 # indicate Voronoi regions (as Euclidean polygons)
 for region in sv.regions:
    n = len(region)
@@ -84,6 +93,8 @@ for region in sv.regions:
                result[..., 1],
                result[..., 2],
                c='k')
+
+               
 '''
 ax.azim = 10
 ax.elev = 40
@@ -106,10 +117,10 @@ centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regi
 centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 
 # Define density as inverse of area (higher area = lower density)
-densities = 1 / areas
+densities = 1 / (areas**3/2)
 
 # Create interpolation function (RBF) using centroids
-rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic', smooth = .1)
+rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
 print(rbf)
 # Generate grid for visualization
 num_grid = 360
