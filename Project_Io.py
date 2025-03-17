@@ -32,17 +32,18 @@ phi = hot_spots_data[:, 0]
 r = np.ones(343)
 
 for i in range(len(theta)):
-    if theta[i]> 180:
-        value = theta[i]-360
-        theta[i]=value
+    value = 180-theta[i]
+    theta[i]=value
+
+
 plt.scatter(theta, phi)
 plt.show
 
 
 for i in range(343):
-    x.append(float((r[i]*math.cos(theta[i])*math.sin(phi[i]))))
-    y.append(float((r[i]*math.sin(theta[i])*math.sin(phi[i]))))
-    z.append(float((r[i]*math.cos(phi[i]))))
+    x.append(float((r[i]*math.cos(theta[i]/180*math.pi)*math.sin(phi[i]/180*math.pi))))
+    y.append(float((r[i]*math.sin(theta[i]/180*math.pi)*math.sin(phi[i]/180*math.pi))))
+    z.append(float((r[i]*math.cos(phi[i]/180*math.pi))))
 
 point = []
 for k in range(343):

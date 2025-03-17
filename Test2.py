@@ -31,10 +31,13 @@ theta = hot_spots_data[:, 1]
 phi = hot_spots_data[:, 0]
 r = np.ones(343)
 
+#for i in range(len(theta)):
+    #if theta[i]> 180:
+        #value = 180- theta[i]
+        #theta[i]=value
 for i in range(len(theta)):
-    if theta[i]> 180:
-        value = theta[i]-360
-        theta[i]=value
+    value = 180-theta[i]
+    theta[i]=value
 
 
 for i in range(343):
