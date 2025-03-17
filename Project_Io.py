@@ -41,9 +41,9 @@ plt.show
 
 
 for i in range(343):
-    x.append(float((r[i]*math.cos(theta[i]/180*math.pi)*math.sin(phi[i]/180*math.pi))))
-    y.append(float((r[i]*math.sin(theta[i]/180*math.pi)*math.sin(phi[i]/180*math.pi))))
-    z.append(float((r[i]*math.cos(phi[i]/180*math.pi))))
+    x.append(float((r[i]*np.cos(theta[i]/180*np.pi)*np.sin(phi[i]/180*np.pi))))
+    y.append(float((r[i]*np.sin(theta[i]/180*np.pi)*np.sin(phi[i]/180*np.pi))))
+    z.append(float((r[i]*np.cos(phi[i]/180*np.pi))))
 
 point = []
 for k in range(343):
