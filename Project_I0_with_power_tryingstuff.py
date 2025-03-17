@@ -81,7 +81,7 @@ for region in sv.regions:
 
 # Read the power data (in Watts) from Powerdata.csv
 power_data, area_data = [], []
-with open('power.csv') as power:
+with open('powerANDarea.csv') as power:
     reader = csv.reader(power)
     powerandarea = list(reader)
 
