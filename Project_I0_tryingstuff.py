@@ -80,7 +80,6 @@ for region in sv.regions:
 '''
 
 # Read the power data (in Watts) from Powerdata.csv
-power_data, area_data = [], []
 with open('powerANDarea.csv') as power:
     reader = csv.reader(power)
     powerandarea = list(reader)
@@ -97,14 +96,28 @@ area_data = [row[1] for row in powerandarea]
 #scaled_areas = areas_in_m2 * (R_Io**2)
 
 # Convert the power data into a numpy array
-power_data = np.array(power_data)  # Already in Watts (W)
+power_data = np.array(power_data) 
 area_data = np.array(area_data)
 # Compute centroids of Voronoi regions
 centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
 
+#handle temperature file
+with open('Temperature.csv') as temp:
+    reader = csv.reader(temp)
+    temps = list(reader)
+temps4=[]
+for i in temps:
+    if i: 
+        temps4.append(float(i[0]))
+    else:
+        temps4.append(0)
+temps = np.array(temps4)
+
 # Calculate intensity (W/m²) for each Voronoi region
 # Intensity = Power (W) / Area (m²)
+
 mask = area_data != 0
+mask4 = temps != 0
 
 centroids1, area_data_1, power_data_1 = centroids[mask], area_data[mask], power_data[mask]
 intensity = power_data_1 / area_data_1
@@ -113,7 +126,7 @@ centroids1_1 = np.sort(centroids1)
 centroids1_1 = centroids1_1[:-6]
 intensity1_1 = intensity1[:-6]
 centroids2, power_data_2 = centroids[:-10], power_data[:-10]
-
+centroids4, temperature = centroids[mask4], temps[mask4]
 
 # Create interpolation function (RBF) using centroids and intensity values
 rbf1 = Rbf(centroids1[:, 0], centroids1[:, 1], centroids1[:, 2], intensity, function='linear')
@@ -121,6 +134,7 @@ rbf1_1 = Rbf(centroids1_1[:, 0], centroids1_1[:, 1], centroids1_1[:, 2], intensi
 rbf2 = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], power_data, function='linear')
 rbf2_2 = Rbf(centroids2[:, 0], centroids2[:, 1], centroids2[:, 2], power_data_2, function='linear')
 rbf3 = Rbf(centroids1[:, 0], centroids1[:, 1], centroids1[:, 2], area_data_1, function='linear')
+rbf4 = Rbf(centroids4[:, 0], centroids4[:, 1], centroids4[:, 2], temperature, function='linear')
 
 # Generate grid for visualization
 num_grid = 360
@@ -137,6 +151,7 @@ intensity_grid_2 = rbf1_1(x_grid, y_grid, z_grid)
 power_grid = rbf2(x_grid, y_grid, z_grid)
 power_grid_2 = rbf2_2(x_grid, y_grid, z_grid)
 area_grid = rbf3(x_grid, y_grid, z_grid)
+temp_grid = rbf4(x_grid, y_grid, z_grid)
 
 # Plot the intensity map (W/m²)
 plt.figure(figsize=(10, 5))
@@ -175,9 +190,15 @@ plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 plt.title('Interpolated Area Field (km²)')
 
+plt.figure(figsize=(10, 5))
+plt.pcolormesh(phi_grid, theta_grid, temp_grid, shading='auto', cmap='viridis')
+plt.colorbar(label='Temperature (K)')
+plt.xlabel('Longitude')
+plt.ylabel('Latitude')
+plt.title('Interpolated Temperature Field (K)')
+
 # Add a scatter plot for the power values at the generator points
 #scatter = ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=power_data, cmap='coolwarm', marker='o', label="Power (W)")
 #fig.colorbar(scatter, ax=ax, label='Power (W)', shrink=0.5, aspect=5)
 
 plt.show()
-
