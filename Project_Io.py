@@ -4,7 +4,7 @@ import matplotlib.pyplot  as plt
 import math
 
 
-from scipy.interpolate import Rbf
+from scipy.interpolate import Rbf, RBFInterpolator
 from scipy.spatial import Delaunay, SphericalVoronoi, geometric_slerp
 from mpl_toolkits.mplot3d import proj3d
 
@@ -109,7 +109,6 @@ areas = sv.calculate_areas()
 
 
 
-
 # Compute centroids of Voronoi regions
 centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
 
@@ -117,10 +116,13 @@ centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regi
 centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 
 # Define density as inverse of area (higher area = lower density)
-densities = 1 / (areas**3/2)
+densities = 1 / (areas)
+
+X_change = np.column_stack((centroids[:, 0], centroids[:, 1], centroids[:, 2]))
+Y_change = densities
 
 # Create interpolation function (RBF) using centroids
-rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
+rbf = RBFInterpolator(X_change, Y_change,  kernel= "linear")
 print(rbf)
 # Generate grid for visualization
 num_grid = 360
@@ -132,7 +134,7 @@ y_grid = np.sin(theta_grid) * np.sin(phi_grid)
 z_grid = np.cos(theta_grid)
 
 # Interpolate density on grid
-density_grid = rbf(x_grid, y_grid, z_grid)
+density_grid = rbf(np.column_stack((x_grid.ravel(), y_grid.ravel(), z_grid.ravel()))).reshape(x_grid.shape)
 
 # Plot the density map
 plt.figure(figsize=(10, 5))
@@ -142,3 +144,6 @@ plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 plt.title('Interpolated Density Field from Spherical Voronoi')
 plt.show()
+
+
+print(len(density_grid))
