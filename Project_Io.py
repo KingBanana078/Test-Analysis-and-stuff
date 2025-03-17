@@ -125,6 +125,8 @@ Y_change = densities
 rbf = RBFInterpolator(X_change, Y_change,  kernel= "linear")
 print(rbf)
 # Generate grid for visualization
+
+#here is an error, cannot find where
 num_grid = 360
 grid_theta = np.linspace(-np.pi, np.pi, num_grid)
 grid_phi = np.linspace(-np.pi/2, np.pi/2, num_grid)
@@ -135,6 +137,10 @@ z_grid = np.cos(theta_grid)
 
 # Interpolate density on grid
 density_grid = rbf(np.column_stack((x_grid.ravel(), y_grid.ravel(), z_grid.ravel()))).reshape(x_grid.shape)
+
+
+#above is an error
+
 
 # Plot the density map
 plt.figure(figsize=(10, 5))
