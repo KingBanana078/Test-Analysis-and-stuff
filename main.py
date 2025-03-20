@@ -94,7 +94,7 @@ def compute_density(sv):
     densities = 1 / areas
 
     # Create interpolation function (RBF) using centroids
-    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear', smooth=1)
+    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
 
     return rbf
 
