@@ -95,7 +95,7 @@ def plot_voronoi(sv, points):
 
 def compute_density(sv):
     """Computes density based on Voronoi cell areas."""
-    areas = (sv.calculate_areas())*1.5  # Compute Voronoi region areas
+    areas = sv.calculate_areas() # Compute Voronoi region areas
     
     # Compute centroids of Voronoi regions
     centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
@@ -114,14 +114,14 @@ def compute_density(sv):
 def plot_density(rbf):
     """Plots a 2D density map from the RBF interpolation."""
     num_grid = 360
-    grid_theta = np.linspace(0, np.pi, num_grid)
+    grid_theta = np.linspace(0, np.pi*2, num_grid)
     grid_phi = np.linspace(0, np.pi, num_grid)
     phi_grid, theta_grid = np.meshgrid(grid_phi, grid_theta)
 
     # Convert grid points to Cartesian coordinates
-    x_grid = np.sin(theta_grid) * np.cos(phi_grid)
+    x_grid = np.cos(theta_grid) * np.sin(phi_grid)
     y_grid = np.sin(theta_grid) * np.sin(phi_grid)
-    z_grid = np.cos(theta_grid)
+    z_grid = np.cos(phi_grid)
 
     # Interpolate density on grid
     density_grid = rbf(x_grid, y_grid, z_grid)
