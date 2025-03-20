@@ -114,10 +114,10 @@ def compute_density(sv):
 def plot_density(rbf):
     """Plots a 2D density map from the RBF interpolation."""
     num_grid = 360
-    grid_theta = np.linspace(-np.pi, np.pi, num_grid)
-    grid_phi = np.linspace(-np.pi/2, np.pi/2, num_grid)
+    grid_theta = np.linspace(0, np.pi, num_grid)
+    grid_phi = np.linspace(0, np.pi, num_grid)
     phi_grid, theta_grid = np.meshgrid(grid_phi, grid_theta)
-    
+
     # Convert grid points to Cartesian coordinates
     x_grid = np.sin(theta_grid) * np.cos(phi_grid)
     y_grid = np.sin(theta_grid) * np.sin(phi_grid)
@@ -155,3 +155,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+print('hello world')
