@@ -95,7 +95,7 @@ def plot_voronoi(sv, points):
 
 def compute_density(sv):
     """Computes density based on Voronoi cell areas."""
-    areas = sv.calculate_areas()  # Compute Voronoi region areas
+    areas = (sv.calculate_areas())*1.5  # Compute Voronoi region areas
     
     # Compute centroids of Voronoi regions
     centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
@@ -104,7 +104,7 @@ def compute_density(sv):
     centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 
     # Define density as inverse of area (higher area = lower density)
-    densities = 1 / areas
+    densities = 1 /  areas
 
     # Create interpolation function (RBF) using centroids
     rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
