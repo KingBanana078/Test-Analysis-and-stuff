@@ -43,7 +43,7 @@ def plot_scatter(theta, phi):
     plt.title("Transformed Hot Spot Coordinates")
     plt.show()
 
-def spherical_to_cartesian(theta, phi, r=1821.6):
+def spherical_to_cartesian(theta, phi, r=1):
     """Converts spherical coordinates (theta, phi) to Cartesian (x, y, z)."""
     x = r * np.cos(np.radians(theta)) * np.sin(np.radians(phi))
     y = r * np.sin(np.radians(theta)) * np.sin(np.radians(phi))
@@ -52,7 +52,7 @@ def spherical_to_cartesian(theta, phi, r=1821.6):
 
 def compute_voronoi(points):
     """Computes the Spherical Voronoi diagram."""
-    radius = 1821.6
+    radius = 1
     center = np.array([0, 0, 0])
     
     sv = SphericalVoronoi(points, radius, center)
@@ -80,7 +80,7 @@ def plot_voronoi(sv, points):
     ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2], c='g', label="Voronoi Vertices")
 
     # Plot Voronoi edges
-    t_vals = np.linspace(0, 1821.6, 2000)
+    t_vals = np.linspace(0, 1, 2000)
     for region in sv.regions:
         n = len(region)
         for i in range(n):
@@ -95,7 +95,7 @@ def plot_voronoi(sv, points):
 
 def compute_density(sv):
     """Computes density based on Voronoi cell areas."""
-    areas = sv.calculate_areas()  # Compute Voronoi region areas
+    areas = (sv.calculate_areas())*1.5  # Compute Voronoi region areas
     
     # Compute centroids of Voronoi regions
     centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
@@ -114,7 +114,7 @@ def compute_density(sv):
 def plot_density(rbf):
     """Plots a 2D density map from the RBF interpolation."""
     num_grid = 360
-    grid_theta = np.linspace(0, np.pi*2, num_grid)
+    grid_theta = np.linspace(0, np.pi, num_grid)
     grid_phi = np.linspace(0, np.pi, num_grid)
     phi_grid, theta_grid = np.meshgrid(grid_phi, grid_theta)
 
@@ -155,3 +155,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+print('hello world')
