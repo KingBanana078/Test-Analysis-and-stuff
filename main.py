@@ -113,8 +113,8 @@ def compute_density(sv):
 
     """ this is computed wrongly"""
     for item in centroids2:
-        item[2] = math.acos(item[2])
-        item [1] = math.acos(item [0] / math.sin(item[2]))
+        item[2] = np.arccos(item[2])
+        item [1] = np.arccos(item [0] / np.sin(item[2]))
         item[0] = 1
     
     print(centroids[4], centroids2[4])
@@ -128,14 +128,14 @@ def compute_density(sv):
 def plot_density(rbf, rbf2):
     """Plots a 2D density map from the RBF interpolation."""
     num_grid = 360
-    grid_theta = np.linspace(-np.pi, np.pi, num_grid)
-    grid_phi = np.linspace(-np.pi/2, np.pi/2, num_grid)
+    grid_theta = np.linspace(0, np.pi*2, num_grid)
+    grid_phi = np.linspace(0, np.pi, num_grid)
     onesarray = np.ones((len(grid_theta), len(grid_theta)))
     phi_grid, theta_grid = np.meshgrid(grid_phi, grid_theta)
 
     grid_theta2 = np.linspace(-np.pi, np.pi, num_grid)
     grid_phi2 = np.linspace(-np.pi/2, np.pi/2, num_grid)
-    phi_grid2, theta_grid2 = np.meshgrid(grid_phi2, grid_theta2)
+    theta_grid2, phi_grid2 = np.meshgrid(grid_theta2, grid_phi2)
 
     # Convert grid points to Cartesian coordinates
     x_grid = np.cos(theta_grid) * np.sin(phi_grid)
