@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import SphericalVoronoi, geometric_slerp
 from scipy.interpolate import Rbf
+import math
 
 
 from scipy.interpolate import Rbf, RBFInterpolator
@@ -21,6 +22,18 @@ def transform_coordinates(hot_spots_data):
     phi = 90 - hot_spots_data[:, 0]     # Adjust latitude
 
     return theta, phi
+
+def Mollweide(hot_spots_data):
+
+    theta = 180 - hot_spots_data[:, 1]  # Adjust longitude
+    phi = hot_spots_data[:, 0]     # Adjust latitude
+
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='mollweide')
+    ax.scatter(theta/180*math.pi, phi/180*math.pi)
+    plt.show()
+
 
 def plot_scatter(theta, phi):
     """Plots a scatter plot of transformed coordinates."""
@@ -126,9 +139,11 @@ def main():
     """Main function to execute the workflow."""
     filename = 'Positiondata.csv'  # Update with the correct file path if needed
     hot_spots_data = read_csv(filename)
-    
+
     theta, phi = transform_coordinates(hot_spots_data)
     plot_scatter(theta, phi)
+
+    Mollweide(hot_spots_data)
     
     points = spherical_to_cartesian(theta, phi)
     sv = compute_voronoi(points)
