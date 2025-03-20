@@ -1,12 +1,23 @@
 from scipy.special import sph_harm
 import numpy as np
+import csv
+import math
+
+with open(r"C:\Users\julia\Downloads\Positiondata.csv")as csvfile:
+    reader = csv.reader(csvfile)
+    hot_spots_data = list(reader)
 
 
-n = np.arange(0, 100, 1)
-m = np.arange(0, 100, 1)
+hot_spots_data = np.array(hot_spots_data, dtype=float)
 
-print(n, m)
+theta = hot_spots_data[:, 0]
+latitude = hot_spots_data[:, 1]
+phi = math.pi/2*latitude
 
 
 
-sph_harm()
+l = np.arange(0, 343, 1)
+m = np.arange(0, 343, 1)
+
+
+sph_harm(l, m, theta, phi)

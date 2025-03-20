@@ -103,6 +103,7 @@ areas = sv.calculate_areas()
 
 
 
+
 # Compute centroids of Voronoi regions
 centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
 
@@ -113,7 +114,7 @@ centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 densities = 1 / areas
 
 # Create interpolation function (RBF) using centroids
-rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic', smooth = .1)
+rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic', smooth = 5)
 print(rbf)
 # Generate grid for visualization
 num_grid = 360
