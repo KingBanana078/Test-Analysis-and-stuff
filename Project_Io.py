@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot  as plt
 import math
 
-from scipy.interpolate import Rbf
+
+from scipy.interpolate import Rbf, RBFInterpolator
 from scipy.spatial import Delaunay, SphericalVoronoi, geometric_slerp
 from mpl_toolkits.mplot3d import proj3d
 
@@ -31,6 +32,10 @@ theta = hot_spots_data[:, 1]
 phi = hot_spots_data[:, 0]
 r = np.ones(343)
 
+theta_prime = 180-theta
+plt.scatter(theta_prime, phi)
+plt.show()
+
 for i in range(len(theta)):
     value = 180-theta[i]
     theta[i]=value
@@ -38,9 +43,6 @@ for i in range(len(theta)):
     value = 90-phi[i]
     phi[i]=value
 
-
-plt.scatter(theta, phi)
-plt.show
 
 
 for i in range(343):
@@ -59,7 +61,6 @@ points = np.array(point)
 radius = 1
 center = np.array([0, 0, 0])
 sv = SphericalVoronoi(points, radius, center)
-
 # sort vertices (optional, helpful for plotting)
 sv.sort_vertices_of_regions()
 t_vals = np.linspace(0, 1, 2000)
@@ -77,6 +78,10 @@ ax.scatter(points[:, 0], points[:, 1], points[:, 2], c='b')
 # plot Voronoi vertices
 ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2],
                    c='g')
+
+
+
+
 # indicate Voronoi regions (as Euclidean polygons)
 for region in sv.regions:
    n = len(region)
@@ -88,6 +93,8 @@ for region in sv.regions:
                result[..., 1],
                result[..., 2],
                c='k')
+
+               
 '''
 ax.azim = 10
 ax.elev = 40
@@ -102,8 +109,6 @@ areas = sv.calculate_areas()
 
 
 
-
-
 # Compute centroids of Voronoi regions
 centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
 
@@ -111,12 +116,17 @@ centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regi
 centroids /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 
 # Define density as inverse of area (higher area = lower density)
-densities = 1 / areas
+densities = 1 / (areas)
+
+X_change = np.column_stack((centroids[:, 0], centroids[:, 1], centroids[:, 2]))
+Y_change = densities
 
 # Create interpolation function (RBF) using centroids
-rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic', smooth = 5)
+rbf = RBFInterpolator(X_change, Y_change,  kernel= "linear")
 print(rbf)
 # Generate grid for visualization
+
+#here is an error, cannot find where
 num_grid = 360
 grid_theta = np.linspace(-np.pi, np.pi, num_grid)
 grid_phi = np.linspace(-np.pi/2, np.pi/2, num_grid)
@@ -126,7 +136,11 @@ y_grid = np.sin(theta_grid) * np.sin(phi_grid)
 z_grid = np.cos(theta_grid)
 
 # Interpolate density on grid
-density_grid = rbf(x_grid, y_grid, z_grid)
+density_grid = rbf(np.column_stack((x_grid.ravel(), y_grid.ravel(), z_grid.ravel()))).reshape(x_grid.shape)
+
+
+#above is an error
+
 
 # Plot the density map
 plt.figure(figsize=(10, 5))
@@ -136,3 +150,6 @@ plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 plt.title('Interpolated Density Field from Spherical Voronoi')
 plt.show()
+
+
+print(len(density_grid))
