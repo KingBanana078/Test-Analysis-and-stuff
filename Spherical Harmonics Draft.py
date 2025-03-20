@@ -18,7 +18,7 @@ latitude = np.radians(latitude_degrees)
 phi = math.pi/2 - latitude
 phi, theta = np.meshgrid(phi, theta)
 
-m, l = 20 , 25
+m, l = 2 , 3
 
 # sph_harm(l, m, theta, phi)
 
