@@ -2,6 +2,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import SphericalVoronoi, geometric_slerp
+from scipy.interpolate import Rbf
 
 def read_csv(filename):
     """Reads a CSV file and converts it to a NumPy array of floats."""
@@ -11,17 +12,13 @@ def read_csv(filename):
 
 def transform_coordinates(hot_spots_data):
     """Converts latitude and longitude to spherical coordinates."""
-    longitude = hot_spots_data[:, 1]
-    latitude = hot_spots_data[:, 0]
-    
-    # Convert to spherical coordinates
-    theta = 180 - longitude  # Adjust longitude for spherical coordinates
-    phi = 90 - latitude      # Convert latitude to colatitude
-    
+    theta = 180 - hot_spots_data[:, 1]  # Adjust longitude
+    phi = 90 - hot_spots_data[:, 0]     # Adjust latitude
+
     return theta, phi
 
 def plot_scatter(theta, phi):
-    """Plots a scatter plot of the transformed coordinates."""
+    """Plots a scatter plot of transformed coordinates."""
     plt.scatter(theta, phi)
     plt.xlabel("Theta (Longitude Adjusted)")
     plt.ylabel("Phi (Latitude Adjusted)")
@@ -35,19 +32,22 @@ def spherical_to_cartesian(theta, phi, r=1):
     z = r * np.cos(np.radians(phi))
     return np.column_stack((x, y, z))
 
-def plot_voronoi(points):
-    """Computes and plots the Spherical Voronoi diagram."""
+def compute_voronoi(points):
+    """Computes the Spherical Voronoi diagram."""
     radius = 1
     center = np.array([0, 0, 0])
     
-    # Compute Spherical Voronoi diagram
     sv = SphericalVoronoi(points, radius, center)
     sv.sort_vertices_of_regions()  # Sort for better visualization
 
-    # Plot the unit sphere
+    return sv
+
+def plot_voronoi(sv, points):
+    """Plots the Spherical Voronoi diagram."""
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     
+    # Plot unit sphere
     u = np.linspace(0, 2 * np.pi, 100)
     v = np.linspace(0, np.pi, 100)
     sphere_x = np.outer(np.cos(u), np.sin(v))
@@ -74,7 +74,6 @@ def plot_voronoi(points):
     ax.legend()
     plt.title("Spherical Voronoi Diagram of Hot Spots")
     plt.show()
-
 
 def compute_density(sv):
     """Computes density based on Voronoi cell areas."""
@@ -118,7 +117,6 @@ def plot_density(rbf):
     plt.title('Interpolated Density Field from Spherical Voronoi')
     plt.show()
 
-
 def main():
     """Main function to execute the workflow."""
     filename = 'Positiondata.csv'  # Update with the correct file path if needed
@@ -128,8 +126,10 @@ def main():
     plot_scatter(theta, phi)
     
     points = spherical_to_cartesian(theta, phi)
-    plot_voronoi(points)
+    sv = compute_voronoi(points)
+    plot_voronoi(sv, points)
 
+    # Compute and plot density
     rbf = compute_density(sv)
     plot_density(rbf)
 
