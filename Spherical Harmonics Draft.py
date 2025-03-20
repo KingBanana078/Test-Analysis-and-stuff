@@ -23,7 +23,7 @@ phi = math.pi/2 - latitude_rad # Convert latitude to co-latitude φ in [0, π]
 # Create Meshgrid (θ first, then φ)
 phi, theta = np.meshgrid(theta, phi)
 
-m, l = 2 , 3
+m, l = 3 , 4
 
 print(theta)
 print(phi)
