@@ -43,7 +43,8 @@ for i in range(len(theta)):
     value = 90-phi[i]
     phi[i]=value
 
-
+plt.scatter(theta, phi)
+plt.show()
 
 for i in range(343):
     x.append(float((r[i]*np.cos(theta[i]/180*np.pi)*np.sin(phi[i]/180*np.pi))))
