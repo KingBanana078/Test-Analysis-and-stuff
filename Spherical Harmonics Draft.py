@@ -11,19 +11,24 @@ with open(r"Positiondata.csv")as csvfile:
 
 hot_spots_data = np.array(hot_spots_data, dtype=float)
 
-theta_degrees = hot_spots_data[:, 0]
-latitude_degrees = hot_spots_data[:, 1]
-theta = np.radians(theta_degrees)
-latitude = np.radians(latitude_degrees)
-phi = math.pi/2 - latitude
-phi, theta = np.meshgrid(phi, theta)
+longitude_deg = hot_spots_data[:,1]  # Longitude in degrees
+latitude_deg = hot_spots_data[:,0] # Latitude in degrees
+
+
+# Convert to radians
+theta = np.radians(longitude_deg) # Azimuthal angle θ in [0, 2π]
+latitude_rad = np.radians(latitude_deg)
+phi = math.pi/2 - latitude_rad # Convert latitude to co-latitude φ in [0, π]
+
+# Create Meshgrid (θ first, then φ)
+phi, theta = np.meshgrid(theta, phi)
 
 m, l = 2 , 3
 
-# sph_harm(l, m, theta, phi)
+print(theta)
+print(phi)
 
-# print(theta, phi)
-# print(sph_harm(l, m, theta, phi))
+print(sph_harm(m, l, theta, phi))
 
 # phi = np.linspace(0, np.pi, 100)
 # theta = np.linspace(0, 2*np.pi, 100)
