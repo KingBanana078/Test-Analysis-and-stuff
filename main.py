@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import SphericalVoronoi, geometric_slerp
-from scipy.interpolate import LinearNDInterpolator, interpn
+from scipy.interpolate import LinearNDInterpolator, interpn, NearestNDInterpolator
 import math
 import scipy as sp
 
@@ -135,10 +135,10 @@ def density_interpolator(sv):
     phi= np.arccos(z / r)  # latitude
     theta = np.arctan2(y, x)  # longitude
 
-    new_itp = LinearNDInterpolator(list(zip(theta,phi)), densities)
-    return new_itp
+    new_itp = NearestNDInterpolator(centroids, densities)
+    return new_itp, centroids
 
-def plot_density(rbf, rbf2, new_itp):
+def plot_density(rbf, rbf2, new_itp, centroids):
     """Plots a 2D density map from the RBF interpolation."""
     num_grid = 360
     grid_theta = np.linspace(0, np.pi*2, num_grid)
@@ -157,12 +157,13 @@ def plot_density(rbf, rbf2, new_itp):
     # Interpolate density on grid
     density_grid = rbf(x_grid, y_grid, z_grid)
     density_grid2 = rbf2(onesarray, theta_grid2, phi_grid2)
-    density = new_itp( theta_grid2, phi_grid2)
+    density = new_itp(x_grid, y_grid, z_grid)
+    new_density = new_itp(onesarray, theta_grid, phi_grid)
 
     # Plot the density map
     plt.figure(figsize=(10, 5))
-    #plt.subplot(projection = 'mollweide')
-    plt.pcolormesh(np.linspace(-0,360, num_grid), np.linspace(-0, 180, num_grid), density, shading='auto', cmap='inferno')
+    #plt.subplot(projection = '3d')
+    plt.pcolormesh(np.linspace(-180,180, num_grid), np.linspace(-90, 90, num_grid), density, shading='auto', cmap='inferno')
     plt.colorbar(label='Density')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
@@ -184,9 +185,9 @@ def main():
     plot_voronoi(sv, points)
 
     # Compute and plot density
-    new_itp = density_interpolator(sv)
+    new_itp, centroids = density_interpolator(sv)
     rbf, rbf2 = compute_density(sv)
-    plot_density(rbf, rbf2, new_itp)
+    plot_density(rbf, rbf2, new_itp, centroids)
 
 if __name__ == "__main__":
     main()
