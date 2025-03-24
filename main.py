@@ -2,8 +2,9 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import SphericalVoronoi, geometric_slerp
-from scipy.interpolate import Rbf
+from scipy.interpolate import LinearNDInterpolator
 import math
+import scipy as sp
 
 
 from scipy.interpolate import Rbf, RBFInterpolator
@@ -124,7 +125,20 @@ def compute_density(sv):
 
     return rbf, rbf2
 
-def plot_density(rbf, rbf2):
+def density_interpolator(sv):
+    areas = sv.calculate_areas()
+    densities = 1/ areas
+    centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
+    x, y, z = centroids[:, 0], centroids[:, 1], centroids[:, 2]
+
+    r = np.sqrt(x**2 + y**2 + z**2)
+    phi= np.arccos(z / r)  # latitude
+    theta = np.arctan2(y, x)  # longitude
+
+    new_itp = LinearNDInterpolator(list(zip(x,y,z)), densities)
+    return new_itp
+
+def plot_density(rbf, rbf2, new_itp):
     """Plots a 2D density map from the RBF interpolation."""
     num_grid = 360
     grid_theta = np.linspace(0, np.pi*2, num_grid)
@@ -142,12 +156,13 @@ def plot_density(rbf, rbf2):
     z_grid = np.cos(phi_grid)
     # Interpolate density on grid
     density_grid = rbf(x_grid, y_grid, z_grid)
-
     density_grid2 = rbf2(onesarray, theta_grid2, phi_grid2)
+    density = new_itp(onesarray, theta_grid2, phi_grid2)
+
     # Plot the density map
     plt.figure(figsize=(10, 5))
     #plt.subplot(projection = 'mollweide')
-    plt.pcolormesh(np.linspace(-180,180, num_grid), np.linspace(-90, 90, num_grid), density_grid2, shading='auto', cmap='inferno')
+    plt.pcolormesh(np.linspace(-180,180, num_grid), np.linspace(-90, 90, num_grid), density, shading='auto', cmap='inferno')
     plt.colorbar(label='Density')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
@@ -169,8 +184,9 @@ def main():
     plot_voronoi(sv, points)
 
     # Compute and plot density
+    new_itp = density_interpolator(sv)
     rbf, rbf2 = compute_density(sv)
-    plot_density(rbf, rbf2)
+    plot_density(rbf, rbf2, new_itp)
 
 if __name__ == "__main__":
     main()
