@@ -114,10 +114,10 @@ def compute_density(sv):
     """ this is computed wrongly"""
     for item in centroids2:
         item[2] = np.arccos(item[2])
-        item [1] = np.arccos(item [0] / np.sin(item[2]))
+        item [1] = np.arcsin(item [1] / np.sin(item[2]))
         item[0] = 1
     
-    print(centroids[4], centroids2[4])
+    print(centroids[8], centroids2[8])
 
     # Create interpolation function (RBF) using centroids
     rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
@@ -148,7 +148,7 @@ def plot_density(rbf, rbf2):
     # Plot the density map
     plt.figure(figsize=(10, 5))
     #plt.subplot(projection = 'mollweide')
-    plt.pcolormesh(np.linspace(-180,180, num_grid), np.linspace(-90, 90, num_grid), density_grid2, shading='auto', cmap='viridis')
+    plt.pcolormesh(np.linspace(-180,180, num_grid), np.linspace(-90, 90, num_grid), density_grid2, shading='auto', cmap='inferno')
     plt.colorbar(label='Density')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
