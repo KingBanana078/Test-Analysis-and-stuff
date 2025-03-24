@@ -106,18 +106,18 @@ def compute_density(sv):
     # Define density as inverse of area (higher area = lower density)
     densities = 1 /  areas
 
-    centroids2 = np.copy(centroids)  # Avoid modifying original centroids
-    x, y, z = centroids2[:, 0], centroids2[:, 1], centroids2[:, 2]
 
-    r = np.sqrt(x**2 + y**2 + z**2)
-    theta = np.arccos(z / r)  # Polar angle
-    phi = np.arctan2(y, x)  # Azimuthal angle
+    centroids2 = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
+    centroids2 /= np.linalg.norm(centroids, axis=1)[:, np.newaxis]
 
-    # Convert to unit sphere representation
-    centroids2 = np.column_stack((np.ones_like(r), theta, phi))
+    """ this is computed wrongly"""
+    for item in centroids2:
+        item[2] = np.arccos(item[2])
+        item [1] = np.arcsin(item [1] / np.sin(item[2]))
+        item[0] = 1
     
     print(centroids[8], centroids2[8])
-    print("centroid xyz")
+
     # Create interpolation function (RBF) using centroids
     rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
     rbf2 = Rbf(centroids2[:, 0], centroids2[:, 1], centroids2[:, 2], densities, function='linear')
