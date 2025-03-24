@@ -133,8 +133,8 @@ def plot_density(rbf, rbf2):
     onesarray = np.ones((len(grid_theta), len(grid_theta)))
     phi_grid, theta_grid = np.meshgrid(grid_phi, grid_theta)
 
-    grid_theta2 = np.linspace(-np.pi, np.pi, num_grid)
-    grid_phi2 = np.linspace(-np.pi/2, np.pi/2, num_grid)
+    grid_theta2 = np.linspace(0, np.pi*2, num_grid)
+    grid_phi2 = np.linspace(0, np.pi, num_grid)
     theta_grid2, phi_grid2 = np.meshgrid(grid_theta2, grid_phi2)
 
     # Convert grid points to Cartesian coordinates
