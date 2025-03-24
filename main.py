@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import SphericalVoronoi, geometric_slerp
-from scipy.interpolate import LinearNDInterpolator
+from scipy.interpolate import LinearNDInterpolator, interpn
 import math
 import scipy as sp
 
@@ -135,7 +135,7 @@ def density_interpolator(sv):
     phi= np.arccos(z / r)  # latitude
     theta = np.arctan2(y, x)  # longitude
 
-    new_itp = LinearNDInterpolator(list(zip(x,y,z)), densities)
+    new_itp = LinearNDInterpolator(list(zip(theta,phi)), densities)
     return new_itp
 
 def plot_density(rbf, rbf2, new_itp):
@@ -157,12 +157,12 @@ def plot_density(rbf, rbf2, new_itp):
     # Interpolate density on grid
     density_grid = rbf(x_grid, y_grid, z_grid)
     density_grid2 = rbf2(onesarray, theta_grid2, phi_grid2)
-    density = new_itp(onesarray, theta_grid2, phi_grid2)
+    density = new_itp( theta_grid2, phi_grid2)
 
     # Plot the density map
     plt.figure(figsize=(10, 5))
     #plt.subplot(projection = 'mollweide')
-    plt.pcolormesh(np.linspace(-180,180, num_grid), np.linspace(-90, 90, num_grid), density, shading='auto', cmap='inferno')
+    plt.pcolormesh(np.linspace(-0,360, num_grid), np.linspace(-0, 180, num_grid), density, shading='auto', cmap='inferno')
     plt.colorbar(label='Density')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
