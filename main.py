@@ -110,8 +110,8 @@ def compute_density(sv):
     x, y, z = centroids2[:, 0], centroids2[:, 1], centroids2[:, 2]
 
     r = np.sqrt(x**2 + y**2 + z**2)
-    theta = np.arccos(z / r)  # Polar angle
-    phi = np.arctan2(y, x)  # Azimuthal angle
+    phi= np.arccos(z / r)  # Polar angle
+    theta = np.arctan2(y, x)  # Azimuthal angle
 
     # Convert to unit sphere representation
     centroids2 = np.column_stack((np.ones_like(r), theta, phi))
