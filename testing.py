@@ -113,6 +113,8 @@ def compute_centroids(vertices, regions):
         #print(len(centroids))
     return np.array(centroids)
 
+
+#needs working on
 def mollweide_plot(centroids, densities, interpolator = None):
     theta = np.pi - centroids[:, 2]  # Convert longitude (phi) to theta for Mollweide
     phi = centroids[:, 1]  # Latitude (theta)
@@ -149,7 +151,6 @@ def mollweide_plot(centroids, densities, interpolator = None):
 
     ax.set_title('Voronoi Density on Mollweide Projection')
     plt.show()
-
 
 def main():
     """Main function to execute the workflow."""
