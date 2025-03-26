@@ -39,7 +39,7 @@ def cartesian_to_spherical(x, y, z):
     
     return np.column_stack([r, theta, phi])
 
-def Mollweide_plot(hot_spots_data):
+def Mollweide_plot_points(hot_spots_data):
 
     theta = 180 - hot_spots_data[:, 1]  # Adjust longitude
     phi = hot_spots_data[:, 0]     # Adjust latitude
@@ -60,7 +60,6 @@ def compute_voronoi(points):
 def compute_area(sv):
     areas = sv.calculate_areas()
     #density = 1/areas
-    
     #print(areas)
     #print(len(areas))
     #print(np.sum(areas))
@@ -71,19 +70,13 @@ def plot_voronoi_cells(sv, areas):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    # Plot points
-    ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2], color='r', s=50, label='Sites')
+    #ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2], color='c', s=50, label='Sites')
 
-    # Color cells based on density (1/area)
     densities = 1 / areas
-
-    # Handle NaN or infinite densities
-    densities = np.nan_to_num(densities, nan=0)  # Replace NaN values with 0
-
     max_density = max(densities)
 
     for i, region in enumerate(sv.regions):
-        if len(region) > 0:  # Skip empty regions
+        if len(region) > 0: 
             polygon = sv.vertices[region]
             if len(polygon) >= 3:
                 # Use Poly3DCollection for 3D polygons
@@ -110,72 +103,86 @@ def compute_centroids(vertices, regions):
         centroid = np.mean(polygon, axis=0)
         centroids.append(centroid)
 
+
         #print(len(centroids))
     return np.array(centroids)
 
+def interpolator_rbf(centroids, areas):
+    #theta = np.radians(centroids[:, 2])  # Convert longitude to radians
+    #phi = np.radians(centroids[:, 1])  # Convert latitude to radians
 
-#needs working on
-def mollweide_plot(centroids, densities, interpolator = None):
-    theta = np.pi - centroids[:, 2]  # Convert longitude (phi) to theta for Mollweide
-    phi = centroids[:, 1]  # Latitude (theta)
+    # Convert to Cartesian coordinates for RBF interpolation
+    #x = np.cos(phi) * np.cos(theta)
+    #y = np.cos(phi) * np.sin(theta)
+    #z = np.sin(phi)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection = "mollweide")
+    areas = np.array(areas)
+    densities = 1 / areas
 
-    # Normalize densities for color mapping
-    max_density = max(densities)
+    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
+    #rbf = Rbf(x, y, z, densities, function='linear')  # 'linear', 'cubic', 'multiquadric', etc.
+
+    return rbf
+
+def mollweide_plot(centroids, data, interpolator=None):
+    theta = np.radians(centroids[:, 2])  
+    phi = np.radians(centroids[:, 1]) 
+
+    fig = plt.figure(figsize=(10, 5))
+    ax = fig.add_subplot(111, projection='mollweide')
+
+    max_density = max(data)
     norm = plt.Normalize(vmin=0, vmax=max_density)
     cmap = plt.cm.plasma
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])  # Required for colorbar
 
     if interpolator:
-        # Interpolation of densities to a grid of points
-        theta_grid, phi_grid = np.meshgrid(np.linspace(-180, 180, 300), np.linspace(-90, 90, 150))
-        theta_grid = np.radians(theta_grid)  # Convert to radians
-        phi_grid = np.radians(phi_grid)  # Convert to radians
-        
-        # Flatten the grid for interpolation
-        grid_points = np.column_stack([np.cos(phi_grid.flatten()) * np.cos(theta_grid.flatten()), 
-                                       np.cos(phi_grid.flatten()) * np.sin(theta_grid.flatten()), 
-                                       np.sin(phi_grid.flatten())])
-        
-        # Interpolate densities on the grid
-        grid_densities = interpolator(grid_points[:, 0], grid_points[:, 1], grid_points[:, 2])
+        # Create grid for interpolation
+        theta_grid, phi_grid = np.meshgrid(np.linspace(-np.pi, np.pi, 300), np.linspace(-np.pi/2, np.pi/2, 150))
 
-        # Plot interpolated grid
-        ax.pcolormesh(theta_grid, phi_grid, grid_densities.reshape(theta_grid.shape), shading='auto', cmap='plasma')
+        # Convert grid points to Cartesian coordinates
+        x_grid = np.cos(phi_grid) * np.cos(theta_grid)
+        y_grid = np.cos(phi_grid) * np.sin(theta_grid)
+        z_grid = np.sin(phi_grid)
+
+        # Interpolate densities using RBF
+        grid_densities = interpolator(x_grid, y_grid, z_grid).reshape(theta_grid.shape)
+
+        # Plot interpolated grid with proper normalization
+        ax.pcolormesh(theta_grid, phi_grid, grid_densities, shading='auto', cmap='plasma', norm=norm)
 
     # Plot the centroids with color based on density
     for i in range(len(centroids)):
-        color = cmap(norm(densities[i]))  # Map density to color
-        ax.scatter(theta[i] / 180 * math.pi, phi[i] / 180 * math.pi, c=[color], marker='o', s=50)
+        color = cmap(norm(data[i]))  # Map density to color
+        ax.scatter(theta[i], phi[i], c=[color], marker='o', s=50)
+
+    # Add color bar (legend)
+    cbar = fig.colorbar(sm, ax=ax, orientation='vertical', shrink=0.7, pad=0.1)
+    cbar.set_label('Density')
 
     ax.set_title('Voronoi Density on Mollweide Projection')
     plt.show()
+
 
 def main():
     """Main function to execute the workflow."""
     filename = 'Positiondata.csv'
     hot_spots_data = read_csv(filename)
 
-    # Convert to Cartesian coordinates
     points = transform_coordinates(hot_spots_data)
+    #Mollweide_plot_points(hot_spots_data)
 
-    # Compute Voronoi diagram
     sv = compute_voronoi(points)
-
-    # Calculate areas of Voronoi cells
     areas = compute_area(sv)
     densities = 1/areas
 
-    # Plot Voronoi diagram with densities
     plot_voronoi_cells(sv, areas)
-
     centroids = compute_centroids(sv.vertices, sv.regions)
 
-    #print(len(densities))
-    interpolator = NearestNDInterpolator(centroids, densities)
+    #interpolator = NearestNDInterpolator(centroids, densities)
+    interpolator = interpolator_rbf(centroids, areas)
 
-    # Plot the results on a Mollweide projection
     mollweide_plot(centroids, densities, interpolator)
 
 if __name__ == "__main__":
