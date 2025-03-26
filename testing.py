@@ -46,8 +46,12 @@ def Mollweide_plot_points(hot_spots_data):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='mollweide')
-    ax.scatter(theta/180*math.pi, phi/180*math.pi)
+    ax.scatter(np.radians(theta), np.radians(phi))
     plt.show()
+
+    #points = np.column_stack([ theta, phi])
+    #print(points)
+    return 
 
 def compute_voronoi(points):
     points = np.asarray(points)
@@ -130,6 +134,7 @@ def mollweide_plot(centroids, data, interpolator=None):
 
     fig = plt.figure(figsize=(10, 5))
     ax = fig.add_subplot(111, projection='mollweide')
+    ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
 
     max_density = max(data)
     norm = plt.Normalize(vmin=0, vmax=max_density)
@@ -139,7 +144,7 @@ def mollweide_plot(centroids, data, interpolator=None):
 
     if interpolator:
         # Create grid for interpolation
-        theta_grid, phi_grid = np.meshgrid(np.linspace(-np.pi, np.pi, 300), np.linspace(-np.pi/2, np.pi/2, 150))
+        theta_grid, phi_grid = np.meshgrid(np.linspace(-np.pi, np.pi, 360), np.linspace(-np.pi/2, np.pi/2, 360))
 
         # Convert grid points to Cartesian coordinates
         x_grid = np.cos(phi_grid) * np.cos(theta_grid)
@@ -180,8 +185,8 @@ def main():
     plot_voronoi_cells(sv, areas)
     centroids = compute_centroids(sv.vertices, sv.regions)
 
-    #interpolator = NearestNDInterpolator(centroids, densities)
-    interpolator = interpolator_rbf(centroids, areas)
+    interpolator = NearestNDInterpolator(centroids, densities)
+    #interpolator = interpolator_rbf(centroids, areas)
 
     mollweide_plot(centroids, densities, interpolator)
 
