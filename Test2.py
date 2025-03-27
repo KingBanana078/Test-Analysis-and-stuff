@@ -17,7 +17,7 @@ def transform_coordinates(hot_spots_data):
     lon_rad = np.radians(180 - hot_spots_data[:, 1])
     lat_rad = np.radians(hot_spots_data[:, 0])
 
-    r = 1 
+    r = 1
 
     x = r * np.cos(lat_rad) * np.cos(lon_rad)
     y = r * np.cos(lat_rad) * np.sin(lon_rad)
