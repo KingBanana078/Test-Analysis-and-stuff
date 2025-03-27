@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="14cc7e8d-200b-4631-a0bb-462969562d43" name="Changes" comment="Update">
+      <change afterPath="$PROJECT_DIR$/SHamonics.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Spherical Harmonics Draft.py" beforeDir="false" afterPath="$PROJECT_DIR$/Spherical Harmonics Draft.py" afterDir="false" />
     </list>
@@ -35,6 +36,7 @@
   "keyToString": {
     "Python.Project_I0_with_power_tryingstuff.executor": "Run",
     "Python.Project_Io.executor": "Run",
+    "Python.SHamonics.executor": "Run",
     "Python.Spherical Harmonics Draft.executor": "Run",
     "Python.Test.executor": "Run",
     "Python.Test2.executor": "Run",
@@ -74,7 +76,9 @@
       <workItem from="1742198277717" duration="6344000" />
       <workItem from="1742207710958" duration="1612000" />
       <workItem from="1742456875736" duration="7672000" />
-      <workItem from="1742802280229" duration="4319000" />
+      <workItem from="1742802280229" duration="9415000" />
+      <workItem from="1742818870238" duration="3148000" />
+      <workItem from="1743061594055" duration="4788000" />
     </task>
     <task id="LOCAL-00001" summary="So that i can pull origin">
       <option name="closed" value="true" />
@@ -132,7 +136,15 @@
       <option name="project" value="LOCAL" />
       <updated>1742462028221</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Update">
+      <option name="closed" value="true" />
+      <created>1742808180538</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1742808180538</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -144,11 +156,12 @@
     <option name="LAST_COMMIT_MESSAGE" value="Update" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Spherical_Harmonics_Draft.coverage" NAME="Spherical Harmonics Draft Coverage Results" MODIFIED="1742807398725" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$main.coverage" NAME="main Coverage Results" MODIFIED="1742807017361" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Spherical_Harmonics_Draft.coverage" NAME="Spherical Harmonics Draft Coverage Results" MODIFIED="1743066140619" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$main.coverage" NAME="main Coverage Results" MODIFIED="1743062784414" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Test.coverage" NAME="Test Coverage Results" MODIFIED="1742202317181" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Project_Io.coverage" NAME="Project_Io Coverage Results" MODIFIED="1742459827683" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Test2.coverage" NAME="Test2 Coverage Results" MODIFIED="1742202102890" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Project_I0_with_power_tryingstuff.coverage" NAME="Project_I0_with_power_tryingstuff Coverage Results" MODIFIED="1742208030664" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$SHamonics.coverage" NAME="SHamonics Coverage Results" MODIFIED="1743065933689" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
