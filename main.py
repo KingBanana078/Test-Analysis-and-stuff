@@ -136,9 +136,9 @@ def density_interpolator(sv):                   #this is ok
 
     r = np.sqrt(x**2 + y**2 + z**2)
     phi= np.arccos(z / r)  # latitude
-    theta = np.arctan2(y, x)  # longitude                                                           #HERE CHECK (e.g. arctan signs)
+    theta = np.arctan2(y, x)  # longitude                                              
 
-    new_itp = NearestNDInterpolator(centroids, densities)                                           #why nearest neighbour
+    new_itp = NearestNDInterpolator(centroids, densities)                                           
     return new_itp, centroids
 
 def plot_density(rbf, rbf2, new_itp, centroids):                    #TO CHECK

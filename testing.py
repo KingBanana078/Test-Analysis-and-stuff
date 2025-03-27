@@ -13,10 +13,9 @@ def read_csv(filename):
     with open(filename) as csvfile:
         reader = csv.reader(csvfile)
         return np.array([list(map(float, row)) for row in reader])
-
 #lat&lon to cartesian
 def transform_coordinates(hot_spots_data):
-    lon_rad = np.radians(hot_spots_data[:, 1])
+    lon_rad = np.radians(180 - hot_spots_data[:, 1])
     lat_rad = np.radians(hot_spots_data[:, 0])
 
     r = 1 
@@ -28,7 +27,6 @@ def transform_coordinates(hot_spots_data):
     #print("Cartesian Coordinates (x,y,z):", x,y,z)
 
     return np.column_stack([x, y, z])
-
 #cartesian to spherical
 def cartesian_to_spherical(x, y, z):
     r = np.sqrt(x**2 + y**2 + z**2)
@@ -39,6 +37,7 @@ def cartesian_to_spherical(x, y, z):
     
     return np.column_stack([r, theta, phi])
 
+#OK
 def Mollweide_plot_points(hot_spots_data):
 
     theta = 180 - hot_spots_data[:, 1]  # Adjust longitude
@@ -97,7 +96,6 @@ def plot_voronoi_cells(sv, areas):
     plt.show()
 
 def compute_centroids(vertices, regions):
-    """Computes the centroids of the Voronoi regions."""
     centroids = []
     for region in regions:
         if len(region) < 3:  # Skip degenerate regions with fewer than 3 vertices
@@ -106,8 +104,7 @@ def compute_centroids(vertices, regions):
         polygon = vertices[region]
         centroid = np.mean(polygon, axis=0)
         centroids.append(centroid)
-
-
+        #print(polygon)
         #print(len(centroids))
     return np.array(centroids)
 
@@ -135,6 +132,7 @@ def mollweide_plot(centroids, data, interpolator=None):
     fig = plt.figure(figsize=(10, 5))
     ax = fig.add_subplot(111, projection='mollweide')
     ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+    #ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2], color='c', s=50, label='Sites')
 
     max_density = max(data)
     norm = plt.Normalize(vmin=0, vmax=max_density)
@@ -169,9 +167,7 @@ def mollweide_plot(centroids, data, interpolator=None):
     ax.set_title('Voronoi Density on Mollweide Projection')
     plt.show()
 
-
 def main():
-    """Main function to execute the workflow."""
     filename = 'Positiondata.csv'
     hot_spots_data = read_csv(filename)
 
@@ -179,6 +175,7 @@ def main():
     #Mollweide_plot_points(hot_spots_data)
 
     sv = compute_voronoi(points)
+    #print((sv.vertices))
     areas = compute_area(sv)
     densities = 1/areas
 
