@@ -11,23 +11,26 @@ from scipy.interpolate import Rbf, RBFInterpolator
 from scipy.spatial import Delaunay, SphericalVoronoi, geometric_slerp
 from mpl_toolkits.mplot3d import proj3d
 
+#this is ok
 def read_csv(filename):
     """Reads a CSV file and converts it to a NumPy array of floats."""
     with open(filename) as csvfile:
         reader = csv.reader(csvfile)
         return np.array([list(map(float, row)) for row in reader])
 
-def transform_coordinates(hot_spots_data):
+#this is ok
+def transform_coordinates(hot_spots_data):              
     """Converts latitude and longitude to spherical coordinates."""
-    theta = 180 - hot_spots_data[:, 1]  # Adjust longitude
-    phi = 90 - hot_spots_data[:, 0]     # Adjust latitude
+    theta = 180 - hot_spots_data[:, 1]  # Adjust longitude --> -180 - 180
+    phi = 90 - hot_spots_data[:, 0]     # Adjust latitude --> 0 - 180
 
     return theta, phi
 
-def Mollweide(hot_spots_data):
+#this is ok
+def Mollweide(hot_spots_data):              
 
-    theta = 180 - hot_spots_data[:, 1]  # Adjust longitude
-    phi = hot_spots_data[:, 0]     # Adjust latitude
+    theta = 180 - hot_spots_data[:, 1]  # Adjust longitude --> -180 - 180
+    phi = hot_spots_data[:, 0]     # Adjust latitude --> 0 - 360
 
 
     fig = plt.figure()
@@ -36,7 +39,7 @@ def Mollweide(hot_spots_data):
     plt.show()
 
 
-def plot_scatter(theta, phi):
+def plot_scatter(theta, phi):                      #this is ok
     """Plots a scatter plot of transformed coordinates."""
     plt.scatter(theta, phi)
     plt.xlabel("Theta (Longitude Adjusted)")
@@ -44,14 +47,14 @@ def plot_scatter(theta, phi):
     plt.title("Transformed Hot Spot Coordinates")
     plt.show()
 
-def spherical_to_cartesian(theta, phi, r=1):
+def spherical_to_cartesian(theta, phi, r=1):           #this is ok
     """Converts spherical coordinates (theta, phi) to Cartesian (x, y, z)."""
     x = r * np.cos(np.radians(theta)) * np.sin(np.radians(phi))
     y = r * np.sin(np.radians(theta)) * np.sin(np.radians(phi))
     z = r * np.cos(np.radians(phi))
     return np.column_stack((x, y, z))
 
-def compute_voronoi(points):
+def compute_voronoi(points):                        #this is ok
     """Computes the Spherical Voronoi diagram."""
     radius = 1
     center = np.array([0, 0, 0])
@@ -61,7 +64,7 @@ def compute_voronoi(points):
 
     return sv
 
-def plot_voronoi(sv, points):
+def plot_voronoi(sv, points):                   #this is ok
     """Plots the Spherical Voronoi diagram."""
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -94,7 +97,7 @@ def plot_voronoi(sv, points):
     plt.title("Spherical Voronoi Diagram of Hot Spots")
     plt.show()
 
-def compute_density(sv):
+def compute_density(sv):                                #TO CHECK
     """Computes density based on Voronoi cell areas."""
     areas = sv.calculate_areas() # Compute Voronoi region areas
     
@@ -125,7 +128,7 @@ def compute_density(sv):
 
     return rbf, rbf2
 
-def density_interpolator(sv):
+def density_interpolator(sv):                   #this is ok
     areas = sv.calculate_areas()
     densities = 1/ areas
     centroids = np.array([np.mean(sv.vertices[region], axis=0) for region in sv.regions])
@@ -133,12 +136,12 @@ def density_interpolator(sv):
 
     r = np.sqrt(x**2 + y**2 + z**2)
     phi= np.arccos(z / r)  # latitude
-    theta = np.arctan2(y, x)  # longitude
+    theta = np.arctan2(y, x)  # longitude                                                           #HERE CHECK (e.g. arctan signs)
 
-    new_itp = NearestNDInterpolator(centroids, densities)
+    new_itp = NearestNDInterpolator(centroids, densities)                                           #why nearest neighbour
     return new_itp, centroids
 
-def plot_density(rbf, rbf2, new_itp, centroids):
+def plot_density(rbf, rbf2, new_itp, centroids):                    #TO CHECK
     """Plots a 2D density map from the RBF interpolation."""
     num_grid = 360
     grid_theta = np.linspace(0, np.pi*2, num_grid)
@@ -183,6 +186,8 @@ def main():
     points = spherical_to_cartesian(theta, phi)
     sv = compute_voronoi(points)
     plot_voronoi(sv, points)
+
+#UP TO HERE ALL GOOD
 
     # Compute and plot density
     new_itp, centroids = density_interpolator(sv)
