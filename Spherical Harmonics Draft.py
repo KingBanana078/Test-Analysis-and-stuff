@@ -11,8 +11,8 @@ with open(r"Positiondata.csv")as csvfile:
 
 hot_spots_data = np.array(hot_spots_data, dtype=float)
 
-# longitude_deg = hot_spots_data[:,1]  # Longitude in degrees
-# latitude_deg = hot_spots_data[:,0] # Latitude in degrees
+longitude_deg = hot_spots_data[:,1]  # Longitude in degrees
+latitude_deg = hot_spots_data[:,0] # Latitude in degrees
 
 
 # Convert to radians
@@ -29,13 +29,11 @@ lon = np.linspace(-180, 180, 360)
 lat = np.linspace(-90, 90, 180)
 lon_grid, lat_grid = np.meshgrid(lon, lat)
 
-print(lon_grid, lat_grid)
-
 # Convert to spherical coordinates
 theta = np.radians(lon_grid)  # Longitude in radians [0, 2π]
 phi = np.radians(90 - lat_grid)  # Convert latitude to co-latitude [0, π]
 
-m, l = 4 ,5
+m, l = 1 ,2
 
 print(theta)
 print(phi)
@@ -63,7 +61,7 @@ ax = fig.add_subplot(111, projection='3d')
 ax.plot_surface(x, y, z,  rstride=1, cstride=1, facecolors=cm.seismic(fcolors))
 # Turn off the axis planes
 ax.set_axis_off()
-# plt.show()
+plt.show()
 
 
 
@@ -72,11 +70,26 @@ lon = np.linspace(-180, 180, 360)
 lat = np.linspace(-90, 90, 180)
 lon_grid, lat_grid = np.meshgrid(lon, lat)
 
-print(lon_grid, lat_grid)
+
+# lon = hot_spots_data[:,1]  # Longitude in degrees
+# lat = hot_spots_data[:,0] # Latitude in degrees
+# lon_grid, lat_grid = np.meshgrid(lon, lat)
+
+theta = np.radians(lon_grid)
+phi = np.radians(90 - lat_grid)
+
+# Convert to radians
+# theta = np.radians(longitude_deg) # Azimuthal angle θ in [0, 2π]
+# latitude_rad = np.radians(latitude_deg)
+# phi = math.pi/2 - latitude_rad # Convert latitude to co-latitude φ in [0, π]
+
+# Create Meshgrid (θ first, then φ)
+# phi, theta = np.meshgrid(theta, phi)
+
 
 # Convert to spherical coordinates
-theta = np.radians(lon_grid)  # Longitude in radians [0, 2π]
-phi = np.radians(90 - lat_grid)  # Convert latitude to co-latitude [0, π]
+# theta = np.radians(lon_grid)  # Longitude in radians [0, 2π]
+# phi = np.radians(90 - lat_grid)  # Convert latitude to co-latitude [0, π]
 
 # Compute the spherical harmonic function
 Y_lm = sph_harm(m, l, theta, phi).real
@@ -94,7 +107,7 @@ lat_radians = np.radians(lat_grid)
 
 # Plot the contour map
 cmap = plt.cm.seismic  # Use a blue-red colormap similar to the reference
-contour = ax.contourf(lon_radians, lat_radians, Y_lm_normalized, levels=30, cmap=cmap)
+contour = ax.pcolormesh(lon_radians, lat_radians, Y_lm_normalized, levels=30, cmap=cmap)
 
 # Add colorbar
 cbar = plt.colorbar(contour, orientation="vertical", shrink=0.8, pad=0.1)
