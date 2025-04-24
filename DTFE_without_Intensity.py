@@ -199,7 +199,8 @@ def rectangularPlot(centroids, data, interpolator=None):
 
         # Plot interpolated grid with proper normalization
         ax.pcolormesh(theta_grid, phi_grid, grid_densities, shading='auto', cmap='plasma', norm=norm)
-
+        ax.set_xlabel("Longitude (radians)")
+        ax.set_ylabel("Latitude (radians)")
     # Plot the centroids with color based on density
     #for i in range(len(centroids)):
         #color = cmap(norm(data[i]))  # Map density to color
@@ -209,7 +210,7 @@ def rectangularPlot(centroids, data, interpolator=None):
     cbar = fig.colorbar(sm, ax=ax, orientation='vertical', shrink=0.7, pad=0.1)
     cbar.set_label('Density')
 
-    ax.set_title('Voronoi Density on Mollweide Projection')
+    ax.set_title('Desnity Plot using DTFE ')
     plt.show()
 
 

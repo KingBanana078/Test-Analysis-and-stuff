@@ -14,8 +14,8 @@ def read_csv(filename):
 
 #lat&lon to cartesian
 def transform_coordinates(hot_spots_data):
-    lon_rad = np.radians(180 - hot_spots_data[0:342, 1])
-    lat_rad = np.radians(hot_spots_data[0:342, 0])
+    lon_rad = np.radians(180 - hot_spots_data[0:341, 1])
+    lat_rad = np.radians(hot_spots_data[0:341, 0])
 
     r = 1
 
@@ -174,8 +174,8 @@ def read_power_area_csv():
                 powerandarea[i][j]=float(powerandarea[i][j])
         power_data = np.array([row[0] for row in powerandarea])
         area_data = np.array([row[1] for row in powerandarea])
-        power_data = power_data[:-1]
-        area_data = area_data[:-1]
+        power_data = power_data[:-2]
+        area_data = area_data[:-2]
         return power_data, area_data
 
 
@@ -195,7 +195,7 @@ def main():
     mask4 = temps != 0
 
     points1, area_data_1, power_data_1 = points[mask], areas[mask], powers[mask]
-    intensity1 = np.sort(power_data_1 / area_data_1)
+    intensity1 =(np.sort(power_data_1 / area_data_1))
 
     sv = compute_voronoi(points1)
     #print((sv.vertices)
