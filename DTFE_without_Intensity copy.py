@@ -1,27 +1,28 @@
-import csv, math
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import SphericalVoronoi, ConvexHull
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator, Rbf
+import math
 from matplotlib import cm
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.colors as mcolors
 
 def read_csv(filename):
+    """Reads a CSV file and converts it to a NumPy array of floats."""
     with open(filename) as csvfile:
         reader = csv.reader(csvfile)
         return np.array([list(map(float, row)) for row in reader])
-
 #lat&lon to cartesian
 def transform_coordinates(hot_spots_data):
-    lon_rad = np.radians(180 - hot_spots_data[0:339, 1])
-    lat_rad = np.radians(hot_spots_data[0:339, 0])
+    longitude = np.radians(180- hot_spots_data[0:343, 1]) #in radians, converts already to spherical reference frame
+    latitude = np.radians(90- hot_spots_data[0:343, 0]) #in randians, converts already to spherical reference frame
 
-    r = 1
-
-    x = r * np.cos(lat_rad) * np.cos(lon_rad)
-    y = r * np.cos(lat_rad) * np.sin(lon_rad)
-    z = r * np.sin(lat_rad)
+    r = 1 
+    #now spherical to cartesian
+    x = r * np.sin(latitude) * np.cos(longitude)
+    y = r * np.sin(latitude) * np.sin(longitude)
+    z = r * np.cos(latitude)
 
     #print("Cartesian Coordinates (x,y,z):", x,y,z)
 
@@ -36,7 +37,7 @@ def cartesian_to_spherical(x, y, z):
     
     return np.column_stack([r, theta, phi])
 
-#OK
+#makes points good for a mollweide plot
 def Mollweide_plot_points(hot_spots_data):
 
     theta = 180 - hot_spots_data[:, 1]  # Adjust longitude
@@ -51,6 +52,7 @@ def Mollweide_plot_points(hot_spots_data):
     #print(points)
     return 
 
+#creates the vonoroi regions, which is Delaunay triangulation
 def compute_voronoi(points):
     points = np.asarray(points)
     points /= np.linalg.norm(points, axis=1)[:, np.newaxis]
@@ -59,7 +61,7 @@ def compute_voronoi(points):
 
     return sv
 
-def compute_area(sv):
+def compute_area(sv): #areas of the vonoroi regions
     areas = sv.calculate_areas()
     #density = 1/areas
     #print(areas)
@@ -67,7 +69,7 @@ def compute_area(sv):
     #print(np.sum(areas))
     return areas
 
-def plot_voronoi_cells(sv, areas):
+def plot_voronoi_cells(sv, areas):  #makes the vonoroi cells, which also create the polygons
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -92,7 +94,7 @@ def plot_voronoi_cells(sv, areas):
     ax.set_zlabel('Z')
     ax.set_title('Spherical Voronoi Diagram with Density')
 
-    plt.show()
+    plt.show() #plot the 3d map of the vonoroi diagram
 
 def compute_centroids(vertices, regions):
     centroids = []
@@ -139,6 +141,7 @@ def mollweide_plot(centroids, data, interpolator=None):
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])  # Required for colorbar
 
+
     if interpolator:
         # Create grid for interpolation
         theta_grid, phi_grid = np.meshgrid(np.linspace(-np.pi, np.pi, 360), np.linspace(-np.pi/2, np.pi/2, 360))
@@ -154,66 +157,83 @@ def mollweide_plot(centroids, data, interpolator=None):
         # Plot interpolated grid with proper normalization
         ax.pcolormesh(theta_grid, phi_grid, grid_densities, shading='auto', cmap='plasma', norm=norm)
 
+    # Plot the centroids with color based on density
+    #for i in range(len(centroids)):
+        #color = cmap(norm(data[i]))  # Map density to color
+        #ax.scatter(theta[i], phi[i], c=[color], marker='o', s=50)
 
     # Add color bar (legend)
     cbar = fig.colorbar(sm, ax=ax, orientation='vertical', shrink=0.7, pad=0.1)
-    cbar.set_label('Instensity')
+    cbar.set_label('Density')
 
-    ax.set_title('Voronoi Intensity on Mollweide Projection')
+    ax.set_title('Voronoi Density on Mollweide Projection')
     plt.show()
 
+def rectangularPlot(centroids, data, interpolator=None):
+    theta = np.radians(centroids[:, 2])  
+    phi = np.radians(centroids[:, 1]) 
 
-#----- INTENSITY ADJUSTMENTS START HERE -----#
+    fig = plt.figure(figsize=(10, 5))
+    ax = fig.add_subplot(111)
+    ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+    #ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2], color='c', s=50, label='Sites')
 
-def read_power_area_csv():
-    with open('powerANDarea.csv') as power:
-        reader = csv.reader(power)
-        powerandarea = list(reader)
-        for i in range(len(powerandarea)): 
-            for j in range(len(powerandarea[i])):
-                powerandarea[i][j]=float(powerandarea[i][j])
-        power_data = np.array([row[0] for row in powerandarea])
-        area_data = np.array([row[1] for row in powerandarea])
-        power_data = power_data[:-4]
-        area_data = area_data[:-4]
-        return power_data, area_data
+    max_density = max(data)
+    norm = plt.Normalize(vmin=0, vmax=max_density)
+    cmap = plt.cm.plasma
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])  # Required for colorbar
 
 
-def read_temp_csv():
-    with open('Temperature.csv') as temp:
-        reader = csv.reader(temp)
-        return [list(map(float, row)) for row in reader]
+    if interpolator:
+        # Create grid for interpolation
+        theta_grid, phi_grid = np.meshgrid(np.linspace(-np.pi, np.pi, 360), np.linspace(-np.pi/2, np.pi/2, 360))
+
+        # Convert grid points to Cartesian coordinates
+        x_grid = np.cos(phi_grid) * np.cos(theta_grid)
+        y_grid = np.cos(phi_grid) * np.sin(theta_grid)
+        z_grid = np.sin(phi_grid)
+
+        # Interpolate densities using RBF
+        grid_densities = interpolator(x_grid, y_grid, z_grid).reshape(theta_grid.shape)
+
+        # Plot interpolated grid with proper normalization
+        ax.pcolormesh(theta_grid, phi_grid, grid_densities, shading='auto', cmap='plasma', norm=norm)
+
+    # Plot the centroids with color based on density
+    #for i in range(len(centroids)):
+        #color = cmap(norm(data[i]))  # Map density to color
+        #ax.scatter(theta[i], phi[i], c=[color], marker='o', s=50)
+
+    # Add color bar (legend)
+    cbar = fig.colorbar(sm, ax=ax, orientation='vertical', shrink=0.7, pad=0.1)
+    cbar.set_label('Density')
+
+    ax.set_title('Voronoi Density on Mollweide Projection')
+    plt.show()
+
 
 def main():
     filename = 'Positiondata.csv'
     hot_spots_data = read_csv(filename)
-    powers, areas = read_power_area_csv()
-    temps = read_temp_csv()
-    points = transform_coordinates(hot_spots_data)
 
-    mask = areas != 0
-    mask4 = temps != 0
+    points = transform_coordinates(hot_spots_data)#calls the datapoints
+    #Mollweide_plot_points(hot_spots_data)
 
-    points1, area_data_1, power_data_1 = points[mask], areas[mask], powers[mask]
-    points1 = points1 [ :-4]
-    intensity1 =(np.sort(power_data_1 / area_data_1))
-    intensity1 = intensity1[:-4]
-    sv = compute_voronoi(points1)
-    #print((sv.vertices)
-    areas_vor = compute_area(sv)
-    densities = 1/areas_vor
+    sv = compute_voronoi(points)#computes the vonoroi function
+    #print((sv.vertices))
+    areas = compute_area(sv)#calculates the areas for the vonoroi cells
+    #print(np.sum(areas)) #checks whether the total area is 4pi
+    densities = 1/areas
 
-    plot_voronoi_cells(sv, areas_vor)
-    centroids = compute_centroids(sv.vertices, sv.regions)
-    
+    plot_voronoi_cells(sv, areas) #plots the 3d map
+    centroids = compute_centroids(sv.vertices, sv.regions) #computes centroids of the vonoroi regions
 
-    interpolator = NearestNDInterpolator(centroids, intensity1)
-    #interpolator = interpolator_rbf(centroids, 1/intensity1)
+    interpolator = NearestNDInterpolator(centroids, densities) #interpolates the areas
+    #interpolator = interpolator_rbf(centroids, areas) #interpolates using a radial basis
 
-    mollweide_plot(centroids, intensity1, interpolator)
-    print(len(powers))
+    mollweide_plot(centroids, densities, interpolator) #plots mollweide of the density
+    rectangularPlot(centroids, densities, interpolator) #plots regular map of the density
 
 if __name__ == "__main__":
     main()
-
-

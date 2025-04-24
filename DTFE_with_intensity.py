@@ -208,6 +208,7 @@ def main():
     #interpolator = interpolator_rbf(centroids, 1/intensity1)
 
     mollweide_plot(centroids, intensity1, interpolator)
+    print(intensity1)
 
 if __name__ == "__main__":
     main()
