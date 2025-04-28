@@ -14,8 +14,8 @@ def read_csv(filename):
 
 #lat&lon to cartesian
 def transform_coordinates(hot_spots_data):
-    lon_rad = np.radians(180 - hot_spots_data[:, 1])
-    lat_rad = np.radians(hot_spots_data[:, 0])
+    lon_rad = np.radians(180 - hot_spots_data[0:342, 1])
+    lat_rad = np.radians(hot_spots_data[0:342, 0])
 
     r = 1
 
@@ -39,8 +39,8 @@ def cartesian_to_spherical(x, y, z):
 #OK
 def Mollweide_plot_points(hot_spots_data):
 
-    theta = 180 - hot_spots_data[:, 1]  # Adjust longitude
-    phi = hot_spots_data[:, 0]     # Adjust latitude
+    theta = 180 - hot_spots_data[0:342, 1]  # Adjust longitude
+    phi = hot_spots_data[0:342, 0]     # Adjust latitude
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='mollweide')
@@ -174,8 +174,8 @@ def read_power_area_csv():
                 powerandarea[i][j]=float(powerandarea[i][j])
         power_data = np.array([row[0] for row in powerandarea])
         area_data = np.array([row[1] for row in powerandarea])
-        #power_data = power_data[:-4]
-        #area_data = area_data[:-4]
+        power_data = power_data[:-1]
+        area_data = area_data[:-1]
         return power_data, area_data
 
 
@@ -193,17 +193,18 @@ def main():
 
     mask = areas != 0
     mask4 = temps != 0
+    
 
     points1, area_data_1, power_data_1 = points[mask], areas[mask], powers[mask]
-    #points1 = points1 [ :-4]
+    #points1 = points1 [ :-1]
     intensity1 =(np.sort(power_data_1 / area_data_1))
-    #intensity1 = intensity1[:-4]
+    #intensity1 = intensity1[:-1]
     sv = compute_voronoi(points1)
     #print((sv.vertices)
     areas_vor = compute_area(sv)
     densities = 1/areas_vor
-
-    plot_voronoi_cells(sv, areas)
+    print(len(area_data_1))
+    plot_voronoi_cells(sv, area_data_1)
     centroids = compute_centroids(sv.vertices, sv.regions)
     
 

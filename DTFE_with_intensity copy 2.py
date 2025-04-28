@@ -138,7 +138,7 @@ def interpolator_rbf(centroids, areas):
     areas = np.array(areas)
     densities = 1 / areas
 
-    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic')
+    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
     #rbf = Rbf(x, y, z, densities, function='linear')  # 'linear', 'cubic', 'multiquadric', etc.
 
     return rbf
@@ -226,8 +226,8 @@ def main():
     centroids = compute_centroids(sv.vertices, sv.regions)
     
 
-    interpolator = NearestNDInterpolator(centroids, intensity1)
-    #interpolator = interpolator_rbf(centroids, 1/intensity1)
+    #interpolator = NearestNDInterpolator(centroids, intensity1)
+    interpolator = interpolator_rbf(centroids, 1/intensity1)
 
     mollweide_plot(centroids, intensity1, interpolator)
     #print(intensity1)
