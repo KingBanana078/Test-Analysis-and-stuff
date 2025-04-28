@@ -88,7 +88,7 @@ def plot_voronoi_cells(sv, areas):
             polygon = sv.vertices[region]
             if len(polygon) >= 3:
                 # Use Poly3DCollection for 3D polygons
-                color = mcolors.to_rgba(cm.plasma(densities[i] / max_density))  # Convert density to color
+                color = mcolors.to_rgba(cm.cividis(densities[i] / max_density))  # Convert density to color
                 poly3d = Poly3DCollection([polygon], facecolors=color, linewidths=1, edgecolors='k', alpha=0.6)
                 ax.add_collection3d(poly3d)
 
@@ -158,7 +158,7 @@ def mollweide_plot(centroids, data, interpolator=None):
         grid_densities = interpolator(x_grid, y_grid, z_grid).reshape(theta_grid.shape)
 
         # Plot interpolated grid with proper normalization
-        ax.pcolormesh(theta_grid, phi_grid, grid_densities, shading='auto', cmap='plasma', norm=norm)
+        ax.pcolormesh(theta_grid, phi_grid, grid_densities, shading='auto', cmap='cividis', norm=norm)
 
 
     # Add color bar (legend)
