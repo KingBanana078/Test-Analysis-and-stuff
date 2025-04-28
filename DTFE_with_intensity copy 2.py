@@ -158,7 +158,7 @@ def mollweide_plot(centroids, data, interpolator=None):
         grid_densities = interpolator(x_grid, y_grid, z_grid).reshape(theta_grid.shape)
 
         # Plot interpolated grid with proper normalization
-        ax.pcolormesh(theta_grid, phi_grid, grid_densities, shading='auto', cmap='cividis', norm=norm)
+        ax.pcolormesh(theta_grid, phi_grid, grid_densities, shading='auto', cmap='plasma', norm=norm)
 
 
     # Add color bar (legend)
