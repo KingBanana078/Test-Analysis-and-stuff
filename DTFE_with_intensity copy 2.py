@@ -7,19 +7,6 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.colors as mcolors
 
-def read_power_area_csv():
-    with open('powerANDarea.csv') as power:
-        reader = csv.reader(power)
-        powerandarea = list(reader)
-        for i in range(len(powerandarea)): 
-            for j in range(len(powerandarea[i])):
-                powerandarea[i][j]=float(powerandarea[i][j])
-        power_data = np.array([row[0] for row in powerandarea])
-        area_data = np.array([row[1] for row in powerandarea])
-        
-        return power_data, area_data
-
-
 def read_temp_csv():
     with open('Temperature.csv') as temp:
         reader = csv.reader(temp)
@@ -101,7 +88,7 @@ def plot_voronoi_cells(sv, areas):
             polygon = sv.vertices[region]
             if len(polygon) >= 3:
                 # Use Poly3DCollection for 3D polygons
-                color = mcolors.to_rgba(cm.plasma(densities[i] / max_density))  # Convert density to color
+                color = mcolors.to_rgba(cm.cividis(densities[i] / max_density))  # Convert density to color
                 poly3d = Poly3DCollection([polygon], facecolors=color, linewidths=1, edgecolors='k', alpha=0.6)
                 ax.add_collection3d(poly3d)
 
@@ -138,7 +125,7 @@ def interpolator_rbf(centroids, areas):
     areas = np.array(areas)
     densities = 1 / areas
 
-    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
+    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='multiquadric')
     #rbf = Rbf(x, y, z, densities, function='linear')  # 'linear', 'cubic', 'multiquadric', etc.
 
     return rbf
@@ -226,8 +213,8 @@ def main():
     centroids = compute_centroids(sv.vertices, sv.regions)
     
 
-    #interpolator = NearestNDInterpolator(centroids, intensity1)
-    interpolator = interpolator_rbf(centroids, 1/intensity1)
+    interpolator = NearestNDInterpolator(centroids, intensity1)
+    #interpolator = interpolator_rbf(centroids, 1/intensity1)
 
     mollweide_plot(centroids, intensity1, interpolator)
     #print(intensity1)
