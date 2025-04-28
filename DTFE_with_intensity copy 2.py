@@ -7,6 +7,25 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.colors as mcolors
 
+def read_power_area_csv():
+    with open('powerANDarea.csv') as power:
+        reader = csv.reader(power)
+        powerandarea = list(reader)
+        for i in range(len(powerandarea)): 
+            for j in range(len(powerandarea[i])):
+                powerandarea[i][j]=float(powerandarea[i][j])
+        power_data = np.array([row[0] for row in powerandarea])
+        area_data = np.array([row[1] for row in powerandarea])
+        
+        return power_data, area_data
+
+
+def read_temp_csv():
+    with open('Temperature.csv') as temp:
+        reader = csv.reader(temp)
+        return [list(map(float, row)) for row in reader]
+
+
 def read_csv(filename):
     with open(filename) as csvfile:
         reader = csv.reader(csvfile)
@@ -119,7 +138,7 @@ def interpolator_rbf(centroids, areas):
     areas = np.array(areas)
     densities = 1 / areas
 
-    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
+    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic')
     #rbf = Rbf(x, y, z, densities, function='linear')  # 'linear', 'cubic', 'multiquadric', etc.
 
     return rbf
@@ -174,8 +193,6 @@ def read_power_area_csv():
                 powerandarea[i][j]=float(powerandarea[i][j])
         power_data = np.array([row[0] for row in powerandarea])
         area_data = np.array([row[1] for row in powerandarea])
-        #power_data = power_data[:-4]
-        #area_data = area_data[:-4]
         return power_data, area_data
 
 
@@ -188,22 +205,24 @@ def main():
     filename = 'Positiondata.csv'
     hot_spots_data = read_csv(filename)
     powers, areas = read_power_area_csv()
+    powers = powers[:-1]
     temps = read_temp_csv()
     points = transform_coordinates(hot_spots_data)
-
+    print(len(powers))
     mask = areas != 0
     mask4 = temps != 0
+    r_io = 1821 #km
+    #points1, area_data_1, power_data_1 = points[mask], areas[mask], powers[mask]
+    
 
-    points1, area_data_1, power_data_1 = points[mask], areas[mask], powers[mask]
-    #points1 = points1 [ :-4]
-    intensity1 =(np.sort(power_data_1 / area_data_1))
-    #intensity1 = intensity1[:-4]
-    sv = compute_voronoi(points1)
+    sv = compute_voronoi(points[:-1])
     #print((sv.vertices)
-    areas_vor = compute_area(sv)
+    areas_vor = compute_area(sv)*r_io**2
+    areas_vor = areas_vor
     densities = 1/areas_vor
+    intensity1 = np.sort(powers / areas_vor)
 
-    plot_voronoi_cells(sv, areas)
+    plot_voronoi_cells(sv, areas_vor)
     centroids = compute_centroids(sv.vertices, sv.regions)
     
 
@@ -211,7 +230,7 @@ def main():
     #interpolator = interpolator_rbf(centroids, 1/intensity1)
 
     mollweide_plot(centroids, intensity1, interpolator)
-    print(len(powers))
+    #print(intensity1)
 
 if __name__ == "__main__":
     main()
