@@ -75,8 +75,8 @@ def compute_voronoi(points):
     points /= np.linalg.norm(points, axis=1)[:, np.newaxis]
     sv = SphericalVoronoi(points, radius=1, center=[0, 0, 0])
     sv.sort_vertices_of_regions()
-
     return sv
+    
 
 def compute_area(sv):
     areas = sv.calculate_areas()
@@ -205,7 +205,7 @@ def main():
     filename = 'Positiondata.csv'
     hot_spots_data = read_csv(filename)
     powers, areas = read_power_area_csv()
-    powers = powers[:-1]
+    powers = powers[:-2]
     temps = read_temp_csv()
     points = transform_coordinates(hot_spots_data)
     print(len(powers))
@@ -215,7 +215,7 @@ def main():
     #points1, area_data_1, power_data_1 = points[mask], areas[mask], powers[mask]
     
 
-    sv = compute_voronoi(points[:-1])
+    sv = compute_voronoi(points[:-2])
     #print((sv.vertices)
     areas_vor = compute_area(sv)*r_io**2
     areas_vor = areas_vor
@@ -231,8 +231,36 @@ def main():
 
     mollweide_plot(centroids, intensity1, interpolator)
     #print(intensity1)
+    #for i in range(len(centroids)):
+    
+
+
+
+#----- BELOW ARE CALCULATIONS ABOUT THE LATITUDINAL DISTRIBUTION OF VOLCANOES AND INTENSITIES -----#
+
+
+    intensity_unsorted = powers / areas_vor
+    plusminus45, poles, INTplusminus45, INTpoles = [], [], [], [] 
+    N = min(len(points), len(intensity_unsorted))
+    
+    for i in range(N):
+        if centroids[i,2] > math.sqrt(2)/2:
+            poles.append(centroids[i,2])
+            INTpoles.append(intensity_unsorted[i])
+        elif centroids[i,2] < - math.sqrt(2)/2:
+            poles.append(centroids[i,2])
+            INTpoles.append(intensity_unsorted[i])
+        else:
+            plusminus45.append(centroids[i,2])
+            INTplusminus45.append(intensity_unsorted[i])
+ 
+    totalintensity = sum(intensity1)
+    avgintensity = totalintensity/sum(areas_vor)
+
+    print(totalintensity, avgintensity, sum(INTplusminus45), sum(INTpoles), sum(INTplusminus45)/totalintensity, sum(INTpoles)/totalintensity)
+    print(len(plusminus45)/341, len(poles)/341)
+
+
 
 if __name__ == "__main__":
     main()
-
-
