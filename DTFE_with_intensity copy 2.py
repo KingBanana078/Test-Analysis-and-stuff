@@ -73,32 +73,28 @@ def compute_area(sv):
     #print(np.sum(areas))
     return areas
 
-def plot_voronoi_cells(sv, areas):
-
+def plot_voronoi_cells(sv, areas, region_indices):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-
-    #ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2], color='c', s=50, label='Sites')
 
     densities = 1 / areas
     max_density = max(densities)
 
-    for i, region in enumerate(sv.regions):
-        if len(region) > 0: 
-            polygon = sv.vertices[region]
-            if len(polygon) >= 3:
-                # Use Poly3DCollection for 3D polygons
-                color = mcolors.to_rgba(cm.cividis(densities[i] / max_density))  # Convert density to color
-                poly3d = Poly3DCollection([polygon], facecolors=color, linewidths=1, edgecolors='k', alpha=0.6)
-                ax.add_collection3d(poly3d)
+    for i, idx in enumerate(region_indices):
+        region = sv.regions[idx]
+        polygon = sv.vertices[region]
+        if len(polygon) >= 3:
+            color = mcolors.to_rgba(cm.cividis(densities[i] / max_density))
+            poly3d = Poly3DCollection([polygon], facecolors=color, linewidths=1, edgecolors='k', alpha=0.6)
+            ax.add_collection3d(poly3d)
 
-    # Set axis labels
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    ax.set_title('Spherical Voronoi Diagram with Density')
-
+    ax.set_title('Voronoi Diagram with Density')
     plt.show()
+
+
 
 def compute_centroids(vertices, regions):
     centroids = []
@@ -193,15 +189,15 @@ def main():
     hot_spots_data = read_csv(filename)
     powers, areas = read_power_area_csv()
     powers = powers[:-2]
+    areas = areas[:-2]
     temps = read_temp_csv()
     points = transform_coordinates(hot_spots_data)
     print(len(powers))
     mask = areas != 0
-    mask4 = temps != 0
     r_io = 1821 #km
     #points1, area_data_1, power_data_1 = points[mask], areas[mask], powers[mask]
-    
 
+    #-----IF WE USE THE VORONOI AREAS---------------------
     sv = compute_voronoi(points[:-2])
     #print((sv.vertices)
     areas_vor = compute_area(sv)*r_io**2
@@ -209,24 +205,42 @@ def main():
     densities = 1/areas_vor
     intensity1 = np.sort(powers / areas_vor)
 
-    plot_voronoi_cells(sv, areas_vor)
+    region_indices = np.arange(len(sv.regions))
+
+    plot_voronoi_cells(sv, areas_vor, region_indices)
+
     centroids = compute_centroids(sv.vertices, sv.regions)
-    
 
     interpolator = NearestNDInterpolator(centroids, intensity1)
     #interpolator = interpolator_rbf(centroids, 1/intensity1)
 
     mollweide_plot(centroids, intensity1, interpolator)
     #print(intensity1)
-    #for i in range(len(centroids)):
     
+    '''
+    #-----IF WE USE THE DATASET AREAS---------------------
+    sv = compute_voronoi(points[:-2])
+    powers = powers[mask]
+    areas_data = areas[mask]
 
+    region_indices = np.where(mask)[0] #chatgpt
+    intensity1 = np.sort(powers / areas_data )
+    centroids = compute_centroids(sv.vertices, sv.regions)
+    centroids = centroids[region_indices]  
+
+    plot_voronoi_cells(sv, areas_data, region_indices) #chatgpt
+    
+    interpolator = NearestNDInterpolator(centroids, intensity1)
+
+    mollweide_plot(centroids, intensity1, interpolator)
+    '''
 
 
 #----- BELOW ARE CALCULATIONS ABOUT THE LATITUDINAL DISTRIBUTION OF VOLCANOES AND INTENSITIES -----#
 
-
-    intensity_unsorted = powers / areas_vor
+    '''
+    #intensity_unsorted = powers / areas_vor
+    #intensity_unsorted = powers / areas_data
     plusminus45, poles, INTplusminus45, INTpoles = [], [], [], [] 
     N = min(len(points), len(intensity_unsorted))
     
@@ -241,12 +255,13 @@ def main():
             plusminus45.append(centroids[i,2])
             INTplusminus45.append(intensity_unsorted[i])
  
-    totalintensity = sum(intensity1)
-    avgintensity = totalintensity/sum(areas_vor)
+    totalintensity = sum(intensity_unsorted)
+    #avgintensity = totalintensity/sum(areas_vor)
+    #avgintensity = totalintensity/sum(areas)
 
     print(totalintensity, avgintensity, sum(INTplusminus45), sum(INTpoles), sum(INTplusminus45)/totalintensity, sum(INTpoles)/totalintensity)
-    print(len(plusminus45)/341, len(poles)/341)
-
+    print(len(plusminus45)/(len(plusminus45)+len(poles)), len(poles)/(len(plusminus45)+len(poles)))
+    '''
 
 
 if __name__ == "__main__":
