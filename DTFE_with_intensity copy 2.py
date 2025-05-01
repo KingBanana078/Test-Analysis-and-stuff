@@ -188,8 +188,8 @@ def main():
     filename = 'Positiondata.csv'
     hot_spots_data = read_csv(filename)
     powers, areas = read_power_area_csv()
-    powers = powers[:-2]
-    areas = areas[:-2]
+    #powers = powers[:-2]
+    #areas = areas[:-2]
     temps = read_temp_csv()
     points = transform_coordinates(hot_spots_data)
     print(len(powers))
@@ -198,12 +198,13 @@ def main():
     #points1, area_data_1, power_data_1 = points[mask], areas[mask], powers[mask]
 
     #-----IF WE USE THE VORONOI AREAS---------------------
-    sv = compute_voronoi(points[:-2])
+    sv = compute_voronoi(points)
     #print((sv.vertices)
     areas_vor = compute_area(sv)*r_io**2
     areas_vor = areas_vor
     densities = 1/areas_vor
-    intensity1 = np.sort(powers / areas_vor)
+    intensity1 = (np.sort(powers / areas_vor)*1000) #w/m^2
+    intensity1log = np.log((np.sort(powers / areas_vor)*1000)) #w/m^2
 
     region_indices = np.arange(len(sv.regions))
 
@@ -214,7 +215,11 @@ def main():
     interpolator = NearestNDInterpolator(centroids, intensity1)
     #interpolator = interpolator_rbf(centroids, 1/intensity1)
 
+    #interpolatorLog = NearestNDInterpolator(centroids, intensity1log)
+    interpolatorLog = interpolator_rbf(centroids, 1/intensity1log)
+
     mollweide_plot(centroids, intensity1, interpolator)
+    mollweide_plot(centroids, intensity1log, interpolatorLog)
     #print(intensity1)
     
     '''
