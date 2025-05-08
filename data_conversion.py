@@ -231,22 +231,3 @@ if __name__ == "__main__":
 '''
 
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Load the latitudes and longitudes
-lat_grid = np.loadtxt('lat.dat')
-lon_grid = np.loadtxt('lon.dat')
-
-# Flatten the grids for easier plotting
-lat_flat = lat_grid.flatten()
-lon_flat = lon_grid.flatten()
-
-# Plot using a scatter plot
-plt.figure(figsize=(8, 6))
-plt.scatter(lon_flat, lat_flat, c='blue', marker='o', s=10)
-plt.xlabel('Longitude')
-plt.ylabel('Latitude')
-plt.title('Scatter Plot of Latitude/Longitude Points')
-plt.grid(True)
-plt.show()
