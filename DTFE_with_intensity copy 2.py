@@ -245,8 +245,7 @@ def main():
 
 #----- BELOW ARE CALCULATIONS ABOUT THE LATITUDINAL DISTRIBUTION OF VOLCANOES AND INTENSITIES -----#
 
-    '''
-    #intensity_unsorted = powers / areas_vor
+    intensity_unsorted = powers / areas_vor
     #intensity_unsorted = powers / areas_data
     plusminus45, poles, INTplusminus45, INTpoles = [], [], [], [] 
     N = min(len(points), len(intensity_unsorted))
@@ -263,12 +262,11 @@ def main():
             INTplusminus45.append(intensity_unsorted[i])
  
     totalintensity = sum(intensity_unsorted)
-    #avgintensity = totalintensity/sum(areas_vor)
+    avgintensity = totalintensity/sum(areas_vor)
     #avgintensity = totalintensity/sum(areas)
 
     print(totalintensity, avgintensity, sum(INTplusminus45), sum(INTpoles), sum(INTplusminus45)/totalintensity, sum(INTpoles)/totalintensity)
     print(len(plusminus45)/(len(plusminus45)+len(poles)), len(poles)/(len(plusminus45)+len(poles)))
-    '''
 
 
 if __name__ == "__main__":
