@@ -121,7 +121,7 @@ def interpolator_rbf(centroids, areas):
     areas = np.array(areas)
     densities = 1 / areas
 
-    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='multiquadric')
+    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
     #rbf = Rbf(x, y, z, densities, function='linear')  # 'linear', 'cubic', 'multiquadric', etc.
 
     return rbf
@@ -131,7 +131,7 @@ def mollweide_plot(centroids, data, interpolator=None):
     phi = np.radians(centroids[:, 1]) 
 
     fig = plt.figure(figsize=(10, 5))
-    ax = fig.add_subplot(111, projection='mollweide')
+    ax = fig.add_subplot(111)
     ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
     #ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2], color='c', s=50, label='Sites')
 
@@ -188,10 +188,10 @@ def main():
     filename = 'Positiondata.csv'
     hot_spots_data = read_csv(filename)
     powers, areas = read_power_area_csv()
-    #powers = powers[:-2]
-    #areas = areas[:-2]
+    powers = powers[:-2]
+    areas = areas[:-2]
     temps = read_temp_csv()
-    points = transform_coordinates(hot_spots_data)
+    points = transform_coordinates(hot_spots_data[:-2])
     print(len(powers))
     mask = areas != 0
     r_io = 1821 #km
