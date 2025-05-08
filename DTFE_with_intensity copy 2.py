@@ -212,8 +212,8 @@ def main():
 
     centroids = compute_centroids(sv.vertices, sv.regions)
 
-    interpolator = NearestNDInterpolator(centroids, intensity1)
-    #interpolator = interpolator_rbf(centroids, 1/intensity1)
+    #interpolator = NearestNDInterpolator(centroids, intensity1)
+    interpolator = interpolator_rbf(centroids, 1/intensity1)
 
     #interpolatorLog = NearestNDInterpolator(centroids, intensity1log)
     interpolatorLog = interpolator_rbf(centroids, 1/intensity1log)
