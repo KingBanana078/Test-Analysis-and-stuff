@@ -1,0 +1,325 @@
+Index: DTFE_with_intensity copy 2.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import csv, math\nimport numpy as np\nimport matplotlib.pyplot as plt\nfrom scipy.spatial import SphericalVoronoi, ConvexHull\nfrom scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator, Rbf\nfrom matplotlib import cm\nfrom mpl_toolkits.mplot3d.art3d import Poly3DCollection\nimport matplotlib.colors as mcolors\n\ndef read_power_area_csv():\n    with open('powerANDarea.csv') as power:\n        reader = csv.reader(power)\n        powerandarea = list(reader)\n        for i in range(len(powerandarea)): \n            for j in range(len(powerandarea[i])):\n                powerandarea[i][j]=float(powerandarea[i][j])\n        power_data = np.array([row[0] for row in powerandarea])\n        area_data = np.array([row[1] for row in powerandarea])\n        \n        return power_data, area_data\n\n\ndef read_temp_csv():\n    with open('Temperature.csv') as temp:\n        reader = csv.reader(temp)\n        return [list(map(float, row)) for row in reader]\n\n\ndef read_csv(filename):\n    with open(filename) as csvfile:\n        reader = csv.reader(csvfile)\n        return np.array([list(map(float, row)) for row in reader])\n\n#lat&lon to cartesian\ndef transform_coordinates(hot_spots_data):\n    lon_rad = np.radians(180 - hot_spots_data[:, 1])\n    lat_rad = np.radians(hot_spots_data[:, 0])\n\n    r = 1\n\n    x = r * np.cos(lat_rad) * np.cos(lon_rad)\n    y = r * np.cos(lat_rad) * np.sin(lon_rad)\n    z = r * np.sin(lat_rad)\n\n    #print(\"Cartesian Coordinates (x,y,z):\", x,y,z)\n\n    return np.column_stack([x, y, z])\n#cartesian to spherical\ndef cartesian_to_spherical(x, y, z):\n    r = np.sqrt(x**2 + y**2 + z**2)\n    theta = np.arccos(z / r)  \n    phi = np.arctan2(y, x)  \n\n    #print(\"Spherical Coordinates (r, θ, φ):\", r,theta,phi)\n    \n    return np.column_stack([r, theta, phi])\n\n#OK\ndef Mollweide_plot_points(hot_spots_data):\n\n    theta = 180 - hot_spots_data[:, 1]  # Adjust longitude\n    phi = hot_spots_data[:, 0]     # Adjust latitude\n\n    fig = plt.figure()\n    ax = fig.add_subplot(111, projection='mollweide')\n    ax.scatter(np.radians(theta), np.radians(phi))\n    plt.show()\n\n    #points = np.column_stack([ theta, phi])\n    #print(points)\n    return \n\ndef compute_voronoi(points):\n    points = np.asarray(points)\n    points /= np.linalg.norm(points, axis=1)[:, np.newaxis]\n    sv = SphericalVoronoi(points, radius=1, center=[0, 0, 0])\n    sv.sort_vertices_of_regions()\n\n    return sv\n\ndef compute_area(sv):\n    areas = sv.calculate_areas()\n    #density = 1/areas\n    #print(areas)\n    #print(len(areas))\n    #print(np.sum(areas))\n    return areas\n\ndef plot_voronoi_cells(sv, areas):\n\n    fig = plt.figure()\n    ax = fig.add_subplot(111, projection='3d')\n\n    #ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2], color='c', s=50, label='Sites')\n\n    densities = 1 / areas\n    max_density = max(densities)\n\n    for i, region in enumerate(sv.regions):\n        if len(region) > 0: \n            polygon = sv.vertices[region]\n            if len(polygon) >= 3:\n                # Use Poly3DCollection for 3D polygons\n                color = mcolors.to_rgba(cm.plasma(densities[i] / max_density))  # Convert density to color\n                poly3d = Poly3DCollection([polygon], facecolors=color, linewidths=1, edgecolors='k', alpha=0.6)\n                ax.add_collection3d(poly3d)\n\n    # Set axis labels\n    ax.set_xlabel('X')\n    ax.set_ylabel('Y')\n    ax.set_zlabel('Z')\n    ax.set_title('Spherical Voronoi Diagram with Density')\n\n    plt.show()\n\ndef compute_centroids(vertices, regions):\n    centroids = []\n    for region in regions:\n        if len(region) < 3:  # Skip degenerate regions with fewer than 3 vertices\n            centroids.append([0, 0, 0])\n            continue\n        polygon = vertices[region]\n        centroid = np.mean(polygon, axis=0)\n        centroids.append(centroid)\n        #print(polygon)\n        #print(len(centroids))\n    return np.array(centroids)\n\ndef interpolator_rbf(centroids, areas):\n    #theta = np.radians(centroids[:, 2])  # Convert longitude to radians\n    #phi = np.radians(centroids[:, 1])  # Convert latitude to radians\n\n    # Convert to Cartesian coordinates for RBF interpolation\n    #x = np.cos(phi) * np.cos(theta)\n    #y = np.cos(phi) * np.sin(theta)\n    #z = np.sin(phi)\n\n    areas = np.array(areas)\n    densities = 1 / areas\n\n    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='cubic')\n    #rbf = Rbf(x, y, z, densities, function='linear')  # 'linear', 'cubic', 'multiquadric', etc.\n\n    return rbf\n\ndef mollweide_plot(centroids, data, interpolator=None):\n    theta = np.radians(centroids[:, 2])  \n    phi = np.radians(centroids[:, 1]) \n\n    fig = plt.figure(figsize=(10, 5))\n    ax = fig.add_subplot(111, projection='mollweide')\n    ax.grid(True, linestyle=\"--\", linewidth=0.5, alpha=0.7)\n    #ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2], color='c', s=50, label='Sites')\n\n    max_density = max(data)\n    norm = plt.Normalize(vmin=0, vmax=max_density)\n    cmap = plt.cm.plasma\n    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)\n    sm.set_array([])  # Required for colorbar\n\n    if interpolator:\n        # Create grid for interpolation\n        theta_grid, phi_grid = np.meshgrid(np.linspace(-np.pi, np.pi, 360), np.linspace(-np.pi/2, np.pi/2, 360))\n\n        # Convert grid points to Cartesian coordinates\n        x_grid = np.cos(phi_grid) * np.cos(theta_grid)\n        y_grid = np.cos(phi_grid) * np.sin(theta_grid)\n        z_grid = np.sin(phi_grid)\n\n        # Interpolate densities using RBF\n        grid_densities = interpolator(x_grid, y_grid, z_grid).reshape(theta_grid.shape)\n\n        # Plot interpolated grid with proper normalization\n        ax.pcolormesh(theta_grid, phi_grid, grid_densities, shading='auto', cmap='plasma', norm=norm)\n\n\n    # Add color bar (legend)\n    cbar = fig.colorbar(sm, ax=ax, orientation='vertical', shrink=0.7, pad=0.1)\n    cbar.set_label('Instensity')\n\n    ax.set_title('Voronoi Intensity on Mollweide Projection')\n    plt.show()\n\n\n#----- INTENSITY ADJUSTMENTS START HERE -----#\n\ndef read_power_area_csv():\n    with open('powerANDarea.csv') as power:\n        reader = csv.reader(power)\n        powerandarea = list(reader)\n        for i in range(len(powerandarea)): \n            for j in range(len(powerandarea[i])):\n                powerandarea[i][j]=float(powerandarea[i][j])\n        power_data = np.array([row[0] for row in powerandarea])\n        area_data = np.array([row[1] for row in powerandarea])\n        return power_data, area_data\n\n\ndef read_temp_csv():\n    with open('Temperature.csv') as temp:\n        reader = csv.reader(temp)\n        return [list(map(float, row)) for row in reader]\n\ndef main():\n    filename = 'Positiondata.csv'\n    hot_spots_data = read_csv(filename)\n    powers, areas = read_power_area_csv()\n    powers = powers[:-1]\n    temps = read_temp_csv()\n    points = transform_coordinates(hot_spots_data)\n    print(len(powers))\n    mask = areas != 0\n    mask4 = temps != 0\n    r_io = 1821 #km\n    #points1, area_data_1, power_data_1 = points[mask], areas[mask], powers[mask]\n    \n\n    sv = compute_voronoi(points[:-1])\n    #print((sv.vertices)\n    areas_vor = compute_area(sv)*r_io**2\n    areas_vor = areas_vor\n    densities = 1/areas_vor\n    intensity1 = np.sort(powers / areas_vor)\n\n    plot_voronoi_cells(sv, areas_vor)\n    centroids = compute_centroids(sv.vertices, sv.regions)\n    \n\n    interpolator = NearestNDInterpolator(centroids, intensity1)\n    #interpolator = interpolator_rbf(centroids, 1/intensity1)\n\n    mollweide_plot(centroids, intensity1, interpolator)\n    #print(intensity1)\n\nif __name__ == \"__main__\":\n    main()\n\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/DTFE_with_intensity copy 2.py b/DTFE_with_intensity copy 2.py
+--- a/DTFE_with_intensity copy 2.py	
++++ b/DTFE_with_intensity copy 2.py	
+@@ -176,7 +176,7 @@
+ 
+     # Add color bar (legend)
+     cbar = fig.colorbar(sm, ax=ax, orientation='vertical', shrink=0.7, pad=0.1)
+-    cbar.set_label('Instensity')
++    cbar.set_label('Intensity (W/m^2)')
+ 
+     ax.set_title('Voronoi Intensity on Mollweide Projection')
+     plt.show()
+@@ -205,7 +205,7 @@
+     filename = 'Positiondata.csv'
+     hot_spots_data = read_csv(filename)
+     powers, areas = read_power_area_csv()
+-    powers = powers[:-1]
++    powers = powers[:-2]
+     temps = read_temp_csv()
+     points = transform_coordinates(hot_spots_data)
+     print(len(powers))
+@@ -215,7 +215,7 @@
+     #points1, area_data_1, power_data_1 = points[mask], areas[mask], powers[mask]
+     
+ 
+-    sv = compute_voronoi(points[:-1])
++    sv = compute_voronoi(points[:-2])
+     #print((sv.vertices)
+     areas_vor = compute_area(sv)*r_io**2
+     areas_vor = areas_vor
+Index: Spherical Harmonics Draft.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from scipy.special import sph_harm\nimport numpy as np\nimport math\nimport csv\nimport matplotlib.pyplot as plt\nfrom matplotlib import cm, colors\n\nwith open(r\"Positiondata.csv\")as csvfile:\n    reader = csv.reader(csvfile)\n    hot_spots_data = list(reader)\n\nhot_spots_data = np.array(hot_spots_data, dtype=float)\n\nlongitude_deg = hot_spots_data[:,1]  # Longitude in degrees\nlatitude_deg = hot_spots_data[:,0] # Latitude in degrees\n\n\n# Convert to radians\n# theta = np.radians(longitude_deg) # Azimuthal angle θ in [0, 2π]\n# latitude_rad = np.radians(latitude_deg)\n# phi = math.pi/2 - latitude_rad # Convert latitude to co-latitude φ in [0, π]\n\n# Create Meshgrid (θ first, then φ)\n# phi, theta = np.meshgrid(theta, phi)\n\n\n# Generate a grid in latitude (-90 to 90) and longitude (-180 to 180)\nlon = np.linspace(-180, 180, 360)\nlat = np.linspace(-90, 90, 180)\nlon_grid, lat_grid = np.meshgrid(lon, lat)\n\n# Convert to spherical coordinates\ntheta = np.radians(lon_grid)  # Longitude in radians [0, 2π]\nphi = np.radians(90 - lat_grid)  # Convert latitude to co-latitude [0, π]\n\nm, l = 1 ,2\n\nprint(theta)\nprint(phi)\n\nprint(sph_harm(m, l, theta, phi))\n\n# phi = np.linspace(0, np.pi, 100)\n# theta = np.linspace(0, 2*np.pi, 100)\n\n\n# The Cartesian Coordinates of a Unit Sphere\nx = np.sin(phi) * np.cos(theta)\ny = np.sin(phi) * np.sin(theta)\nz = np.cos(phi)\n\n\n# Calculate the spherical harmonic Y(l,m) and normalize to [0,1]\nfcolors = sph_harm(m, l, theta, phi).real\nf_max, f_min = fcolors.max(), fcolors.min()\nfcolors = (fcolors - f_min)/(f_max - f_min)\n\n# Set the aspect ratio to 1 so our sphere looks spherical\nfig = plt.figure(figsize=plt.figaspect(1.))\nax = fig.add_subplot(111, projection='3d')\nax.plot_surface(x, y, z,  rstride=1, cstride=1, facecolors=cm.seismic(fcolors))\n# Turn off the axis planes\nax.set_axis_off()\nplt.show()\n\n\n\n# Generate a grid in latitude (-90 to 90) and longitude (-180 to 180)\nlon = np.linspace(-180, 180, 360)\nlat = np.linspace(-90, 90, 180)\nlon_grid, lat_grid = np.meshgrid(lon, lat)\n\n\n# lon = hot_spots_data[:,1]  # Longitude in degrees\n# lat = hot_spots_data[:,0] # Latitude in degrees\n# lon_grid, lat_grid = np.meshgrid(lon, lat)\n\ntheta = np.radians(lon_grid)\nphi = np.radians(90 - lat_grid)\n\n# Convert to radians\n# theta = np.radians(longitude_deg) # Azimuthal angle θ in [0, 2π]\n# latitude_rad = np.radians(latitude_deg)\n# phi = math.pi/2 - latitude_rad # Convert latitude to co-latitude φ in [0, π]\n\n# Create Meshgrid (θ first, then φ)\n# phi, theta = np.meshgrid(theta, phi)\n\n\n# Convert to spherical coordinates\n# theta = np.radians(lon_grid)  # Longitude in radians [0, 2π]\n# phi = np.radians(90 - lat_grid)  # Convert latitude to co-latitude [0, π]\n\n# Compute the spherical harmonic function\nY_lm = sph_harm(m, l, theta, phi).real\n\n# Normalize for better visualization\nY_lm_normalized = (Y_lm - Y_lm.min()) / (Y_lm.max() - Y_lm.min())\n\n# Create the Mollweide projection plot\nfig = plt.figure(figsize=(10, 5))\nax = fig.add_subplot(111, projection=\"mollweide\")\n\n# Convert degrees to radians for Matplotlib Mollweide projection\nlon_radians = np.radians(lon_grid)\nlat_radians = np.radians(lat_grid)\n\n# Plot the contour map\ncmap = plt.cm.seismic  # Use a blue-red colormap similar to the reference\ncontour = ax.pcolormesh(lon_radians, lat_radians, Y_lm_normalized, levels=30, cmap=cmap)\n\n# Add colorbar\ncbar = plt.colorbar(contour, orientation=\"vertical\", shrink=0.8, pad=0.1)\ncbar.set_label(\"Normalized Magnitude\")\n\n# Grid lines for reference\nax.grid(True, linestyle=\"--\", linewidth=0.5)\n\n# Set title\nplt.title(f\"Spherical Harmonic Y({l},{m}) in Mollweide Projection\")\n\n# Show the plot\nplt.show()\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Spherical Harmonics Draft.py b/Spherical Harmonics Draft.py
+--- a/Spherical Harmonics Draft.py	
++++ b/Spherical Harmonics Draft.py	
+@@ -33,7 +33,7 @@
+ theta = np.radians(lon_grid)  # Longitude in radians [0, 2π]
+ phi = np.radians(90 - lat_grid)  # Convert latitude to co-latitude [0, π]
+ 
+-m, l = 1 ,2
++m, l = 2 ,3
+ 
+ print(theta)
+ print(phi)
+@@ -94,8 +94,6 @@
+ # Compute the spherical harmonic function
+ Y_lm = sph_harm(m, l, theta, phi).real
+ 
+-# Normalize for better visualization
+-Y_lm_normalized = (Y_lm - Y_lm.min()) / (Y_lm.max() - Y_lm.min())
+ 
+ # Create the Mollweide projection plot
+ fig = plt.figure(figsize=(10, 5))
+@@ -107,7 +105,7 @@
+ 
+ # Plot the contour map
+ cmap = plt.cm.seismic  # Use a blue-red colormap similar to the reference
+-contour = ax.pcolormesh(lon_radians, lat_radians, Y_lm_normalized, levels=30, cmap=cmap)
++contour = ax.pcolormesh(lon_radians, lat_radians, Y_lm, levels=30, cmap=cmap)
+ 
+ # Add colorbar
+ cbar = plt.colorbar(contour, orientation="vertical", shrink=0.8, pad=0.1)
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"AutoImportSettings\">\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\n  </component>\n  <component name=\"ChangeListManager\">\n    <list default=\"true\" id=\"14cc7e8d-200b-4631-a0bb-462969562d43\" name=\"Changes\" comment=\"Update\">\n      <change afterPath=\"$PROJECT_DIR$/SHamonics.py\" afterDir=\"false\" />\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\n      <change beforePath=\"$PROJECT_DIR$/Spherical Harmonics Draft.py\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/Spherical Harmonics Draft.py\" afterDir=\"false\" />\n    </list>\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\n  </component>\n  <component name=\"FileTemplateManagerImpl\">\n    <option name=\"RECENT_TEMPLATES\">\n      <list>\n        <option value=\"Python Script\" />\n      </list>\n    </option>\n  </component>\n  <component name=\"Git.Settings\">\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\n  </component>\n  <component name=\"ProjectColorInfo\">{\n  &quot;associatedIndex&quot;: 3\n}</component>\n  <component name=\"ProjectId\" id=\"2u7ndY975eCC6Ls2C65Xbl0CKcg\" />\n  <component name=\"ProjectViewState\">\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\n    <option name=\"showLibraryContents\" value=\"true\" />\n  </component>\n  <component name=\"PropertiesComponent\"><![CDATA[{\n  \"keyToString\": {\n    \"Python.Project_I0_with_power_tryingstuff.executor\": \"Run\",\n    \"Python.Project_Io.executor\": \"Run\",\n    \"Python.SHamonics.executor\": \"Run\",\n    \"Python.Spherical Harmonics Draft.executor\": \"Run\",\n    \"Python.Test.executor\": \"Run\",\n    \"Python.Test2.executor\": \"Run\",\n    \"Python.main.executor\": \"Run\",\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\n    \"git-widget-placeholder\": \"main\",\n    \"node.js.detected.package.eslint\": \"true\",\n    \"node.js.detected.package.tslint\": \"true\",\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\n    \"nodejs_package_manager_path\": \"npm\",\n    \"vue.rearranger.settings.migration\": \"true\"\n  }\n}]]></component>\n  <component name=\"SharedIndexes\">\n    <attachedChunks>\n      <set>\n        <option value=\"bundled-js-predefined-1d06a55b98c1-74d2a5396914-JavaScript-PY-241.14494.241\" />\n        <option value=\"bundled-python-sdk-0509580d9d50-28c9f5db9ffe-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-241.14494.241\" />\n      </set>\n    </attachedChunks>\n  </component>\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\n  <component name=\"TaskManager\">\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\n      <changelist id=\"14cc7e8d-200b-4631-a0bb-462969562d43\" name=\"Changes\" comment=\"\" />\n      <created>1741608568762</created>\n      <option name=\"number\" value=\"Default\" />\n      <option name=\"presentableId\" value=\"Default\" />\n      <updated>1741608568762</updated>\n      <workItem from=\"1741608569514\" duration=\"160000\" />\n      <workItem from=\"1741794529590\" duration=\"20000\" />\n      <workItem from=\"1741852637917\" duration=\"7301000\" />\n      <workItem from=\"1741872319344\" duration=\"594000\" />\n      <workItem from=\"1741874166927\" duration=\"905000\" />\n      <workItem from=\"1741888379527\" duration=\"599000\" />\n      <workItem from=\"1742198277717\" duration=\"6344000\" />\n      <workItem from=\"1742207710958\" duration=\"1612000\" />\n      <workItem from=\"1742456875736\" duration=\"7672000\" />\n      <workItem from=\"1742802280229\" duration=\"9415000\" />\n      <workItem from=\"1742818870238\" duration=\"3148000\" />\n      <workItem from=\"1743061594055\" duration=\"4788000\" />\n    </task>\n    <task id=\"LOCAL-00001\" summary=\"So that i can pull origin\">\n      <option name=\"closed\" value=\"true\" />\n      <created>1742457022360</created>\n      <option name=\"number\" value=\"00001\" />\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1742457022360</updated>\n    </task>\n    <task id=\"LOCAL-00002\" summary=\"Update\">\n      <option name=\"closed\" value=\"true\" />\n      <created>1742458908629</created>\n      <option name=\"number\" value=\"00002\" />\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1742458908629</updated>\n    </task>\n    <task id=\"LOCAL-00003\" summary=\"Update\">\n      <option name=\"closed\" value=\"true\" />\n      <created>1742458927184</created>\n      <option name=\"number\" value=\"00003\" />\n      <option name=\"presentableId\" value=\"LOCAL-00003\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1742458927184</updated>\n    </task>\n    <task id=\"LOCAL-00004\" summary=\"Update\">\n      <option name=\"closed\" value=\"true\" />\n      <created>1742459489657</created>\n      <option name=\"number\" value=\"00004\" />\n      <option name=\"presentableId\" value=\"LOCAL-00004\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1742459489657</updated>\n    </task>\n    <task id=\"LOCAL-00005\" summary=\"Update\">\n      <option name=\"closed\" value=\"true\" />\n      <created>1742459840838</created>\n      <option name=\"number\" value=\"00005\" />\n      <option name=\"presentableId\" value=\"LOCAL-00005\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1742459840838</updated>\n    </task>\n    <task id=\"LOCAL-00006\" summary=\"Update\">\n      <option name=\"closed\" value=\"true\" />\n      <created>1742461782418</created>\n      <option name=\"number\" value=\"00006\" />\n      <option name=\"presentableId\" value=\"LOCAL-00006\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1742461782418</updated>\n    </task>\n    <task id=\"LOCAL-00007\" summary=\"Update\">\n      <option name=\"closed\" value=\"true\" />\n      <created>1742462028221</created>\n      <option name=\"number\" value=\"00007\" />\n      <option name=\"presentableId\" value=\"LOCAL-00007\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1742462028221</updated>\n    </task>\n    <task id=\"LOCAL-00008\" summary=\"Update\">\n      <option name=\"closed\" value=\"true\" />\n      <created>1742808180538</created>\n      <option name=\"number\" value=\"00008\" />\n      <option name=\"presentableId\" value=\"LOCAL-00008\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1742808180538</updated>\n    </task>\n    <option name=\"localTasksCounter\" value=\"9\" />\n    <servers />\n  </component>\n  <component name=\"TypeScriptGeneratedFilesManager\">\n    <option name=\"version\" value=\"3\" />\n  </component>\n  <component name=\"VcsManagerConfiguration\">\n    <MESSAGE value=\"So that i can pull origin\" />\n    <MESSAGE value=\"Update\" />\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"Update\" />\n  </component>\n  <component name=\"com.intellij.coverage.CoverageDataManagerImpl\">\n    <SUITE FILE_PATH=\"coverage/Test_Analysis_and_stuff$Spherical_Harmonics_Draft.coverage\" NAME=\"Spherical Harmonics Draft Coverage Results\" MODIFIED=\"1743066140619\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"false\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\n    <SUITE FILE_PATH=\"coverage/Test_Analysis_and_stuff$main.coverage\" NAME=\"main Coverage Results\" MODIFIED=\"1743062784414\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"false\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\n    <SUITE FILE_PATH=\"coverage/Test_Analysis_and_stuff$Test.coverage\" NAME=\"Test Coverage Results\" MODIFIED=\"1742202317181\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"false\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\n    <SUITE FILE_PATH=\"coverage/Test_Analysis_and_stuff$Project_Io.coverage\" NAME=\"Project_Io Coverage Results\" MODIFIED=\"1742459827683\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"false\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\n    <SUITE FILE_PATH=\"coverage/Test_Analysis_and_stuff$Test2.coverage\" NAME=\"Test2 Coverage Results\" MODIFIED=\"1742202102890\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"false\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\n    <SUITE FILE_PATH=\"coverage/Test_Analysis_and_stuff$Project_I0_with_power_tryingstuff.coverage\" NAME=\"Project_I0_with_power_tryingstuff Coverage Results\" MODIFIED=\"1742208030664\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"false\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\n    <SUITE FILE_PATH=\"coverage/Test_Analysis_and_stuff$SHamonics.coverage\" NAME=\"SHamonics Coverage Results\" MODIFIED=\"1743065933689\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"false\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	
++++ b/.idea/workspace.xml	
+@@ -5,8 +5,9 @@
+   </component>
+   <component name="ChangeListManager">
+     <list default="true" id="14cc7e8d-200b-4631-a0bb-462969562d43" name="Changes" comment="Update">
+-      <change afterPath="$PROJECT_DIR$/SHamonics.py" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/SH.py" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/SHamonics.py" beforeDir="false" afterPath="$PROJECT_DIR$/SHamonics.py" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/Spherical Harmonics Draft.py" beforeDir="false" afterPath="$PROJECT_DIR$/Spherical Harmonics Draft.py" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+@@ -34,13 +35,20 @@
+   </component>
+   <component name="PropertiesComponent"><![CDATA[{
+   "keyToString": {
++    "Python.DTFE_with_intensity copy 2.executor": "Run",
++    "Python.DTFE_with_intensity copy.executor": "Run",
++    "Python.DTFE_with_intensity.executor": "Run",
++    "Python.DTFE_without_Intensity.executor": "Run",
+     "Python.Project_I0_with_power_tryingstuff.executor": "Run",
+     "Python.Project_Io.executor": "Run",
++    "Python.SH.executor": "Run",
+     "Python.SHamonics.executor": "Run",
+     "Python.Spherical Harmonics Draft.executor": "Run",
+     "Python.Test.executor": "Run",
+     "Python.Test2.executor": "Run",
+     "Python.main.executor": "Run",
++    "Python.testing.executor": "Run",
++    "Python.with_intensity.executor": "Run",
+     "RunOnceActivity.ShowReadmeOnStart": "true",
+     "git-widget-placeholder": "main",
+     "node.js.detected.package.eslint": "true",
+@@ -78,7 +86,16 @@
+       <workItem from="1742456875736" duration="7672000" />
+       <workItem from="1742802280229" duration="9415000" />
+       <workItem from="1742818870238" duration="3148000" />
+-      <workItem from="1743061594055" duration="4788000" />
++      <workItem from="1743061594055" duration="9784000" />
++      <workItem from="1743079285178" duration="3000" />
++      <workItem from="1743094695478" duration="283000" />
++      <workItem from="1743789548963" duration="48000" />
++      <workItem from="1745324525220" duration="4555000" />
++      <workItem from="1745437416204" duration="174000" />
++      <workItem from="1745437602259" duration="6762000" />
++      <workItem from="1745477309923" duration="9096000" />
++      <workItem from="1745504376992" duration="1402000" />
++      <workItem from="1745826322180" duration="5405000" />
+     </task>
+     <task id="LOCAL-00001" summary="So that i can pull origin">
+       <option name="closed" value="true" />
+@@ -144,7 +161,15 @@
+       <option name="project" value="LOCAL" />
+       <updated>1742808180538</updated>
+     </task>
+-    <option name="localTasksCounter" value="9" />
++    <task id="LOCAL-00009" summary="Update">
++      <option name="closed" value="true" />
++      <created>1743066552089</created>
++      <option name="number" value="00009" />
++      <option name="presentableId" value="LOCAL-00009" />
++      <option name="project" value="LOCAL" />
++      <updated>1743066552089</updated>
++    </task>
++    <option name="localTasksCounter" value="10" />
+     <servers />
+   </component>
+   <component name="TypeScriptGeneratedFilesManager">
+@@ -156,12 +181,19 @@
+     <option name="LAST_COMMIT_MESSAGE" value="Update" />
+   </component>
+   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+-    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Spherical_Harmonics_Draft.coverage" NAME="Spherical Harmonics Draft Coverage Results" MODIFIED="1743066140619" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+-    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$main.coverage" NAME="main Coverage Results" MODIFIED="1743062784414" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+-    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Test.coverage" NAME="Test Coverage Results" MODIFIED="1742202317181" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+-    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Project_Io.coverage" NAME="Project_Io Coverage Results" MODIFIED="1742459827683" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+-    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Test2.coverage" NAME="Test2 Coverage Results" MODIFIED="1742202102890" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$main.coverage" NAME="main Coverage Results" MODIFIED="1743789551691" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$SH.coverage" NAME="SH Coverage Results" MODIFIED="1745487532139" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Test.coverage" NAME="Test Coverage Results" MODIFIED="1745504390683" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$with_intensity.coverage" NAME="with_intensity Coverage Results" MODIFIED="1743094727994" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Project_Io.coverage" NAME="Project_Io Coverage Results" MODIFIED="1743094704563" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$DTFE_without_Intensity.coverage" NAME="DTFE_without_Intensity Coverage Results" MODIFIED="1745504557137" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+     <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Project_I0_with_power_tryingstuff.coverage" NAME="Project_I0_with_power_tryingstuff Coverage Results" MODIFIED="1742208030664" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+-    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$SHamonics.coverage" NAME="SHamonics Coverage Results" MODIFIED="1743065933689" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$SHamonics.coverage" NAME="SHamonics Coverage Results" MODIFIED="1745324528411" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Spherical_Harmonics_Draft.coverage" NAME="Spherical Harmonics Draft Coverage Results" MODIFIED="1745481144961" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$DTFE_with_intensity.coverage" NAME="DTFE_with_intensity Coverage Results" MODIFIED="1745827129855" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$DTFE_with_intensity_copy.coverage" NAME="DTFE_with_intensity copy Coverage Results" MODIFIED="1745827172460" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$Test2.coverage" NAME="Test2 Coverage Results" MODIFIED="1742202102890" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$testing.coverage" NAME="testing Coverage Results" MODIFIED="1743094789296" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/Test_Analysis_and_stuff$DTFE_with_intensity_copy_2.coverage" NAME="DTFE_with_intensity copy 2 Coverage Results" MODIFIED="1745827425749" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+   </component>
+ </project>
+\ No newline at end of file
+Index: SH.py
+===================================================================
+diff --git a/SH.py b/SH.py
+new file mode 100644
+--- /dev/null	
++++ b/SH.py	
+@@ -0,0 +1,86 @@
++import numpy as np
++import csv
++from scipy.special import sph_harm
++import matplotlib.pyplot as plt
++import pyshtools
++
++with open(r"Positiondata.csv") as csvfile:
++    reader = csv.reader(csvfile)
++    hot_spots_data = list(reader)
++
++
++# latitude and longitude in deg
++lat = np.array(hot_spots_data)[:,0]
++lon = np.array(hot_spots_data)[:,1]
++
++# convert to float
++lat = np.array(lat, dtype=np.float64)
++lon = np.array(lon, dtype=np.float64)
++
++lat_rad = np.radians(lat)
++phi = np.radians(lon) # Longitude in radians [0, 2π]
++theta = np.pi/2 - lat_rad # latitude to co-latitude [0, π]
++
++print(theta,phi)
++
++# Resolution
++N_theta = 100
++N_phi = 200
++theta_grid = np.linspace(0, np.pi, N_theta)
++phi_grid = np.linspace(0, 2 * np.pi, N_phi)
++phi_mesh, theta_mesh = np.meshgrid(phi_grid, theta_grid)
++
++# Density
++density = np.zeros_like(theta_mesh)
++
++# Kernel Width (Radians)
++sigma = 0.1
++
++# Distance
++for t, p in zip(theta, phi):
++    ang_dist_sq = (np.sin((theta_mesh - t)/2))**2 + np.sin((phi_mesh - p)/2)**2
++    ang_dist_sq = 4 * ang_dist_sq
++    density += np.exp(-ang_dist_sq / (2 * sigma**2))
++
++# If we use Haversine instead of just an approximation
++for t, p in zip(theta, phi):
++    a = (np.sin((theta_mesh-t) / 2) ** 2 +
++         np.sin((phi_mesh-p) / 2) ** 2 * np.sin(theta_mesh) * np.sin(t))
++    ang_dist_sq = 2 * np.arcsin(np.sqrt(a))
++    density += np.exp(-ang_dist_sq / (2 * sigma**2))
++
++# Plot
++plt.figure(figsize=(12, 6))
++plt.contourf(np.degrees(phi_mesh), 90 - np.degrees(theta_mesh), density, levels=40, cmap='viridis')
++plt.colorbar(label='Density')
++plt.xlabel('Longitude (°)')
++plt.ylabel('Latitude (°)')
++plt.title('KDE-based Density (Gaussian Kernel)')
++plt.show()
++
++# Density is flipped in latitude (pyshtools +90 to -90 lat ordering)
++density_flipped = np.flipud(density)
++
++# Create a SHGrid object
++grid = pyshtools.SHGrid.from_array(density_flipped)
++
++# Expand into spherical harmonics
++clm = grid.expand()  # Returns SHCoeffs object
++
++# Optional: truncate to a maximum degree (e.g., lmax = 20)
++clm_trunc = clm.pad(lmax=20)
++
++# Reconstruct smoothed field (can change grid resolution if needed)
++reconstructed = clm_trunc.expand(grid='DH').to_array()
++
++# Plot result
++import matplotlib.pyplot as plt
++plt.figure(figsize=(12, 6))
++plt.contourf(np.linspace(0, 360, reconstructed.shape[1]),
++             np.linspace(-90, 90, reconstructed.shape[0]),
++             reconstructed, levels=40, cmap='viridis')
++plt.title('Reconstructed Density from Spherical Harmonics')
++plt.xlabel('Longitude (°)')
++plt.ylabel('Latitude (°)')
++plt.colorbar(label='Density')
++plt.show()
+\ No newline at end of file
+Index: SHamonics.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/SHamonics.py b/SHamonics.py
+--- a/SHamonics.py	
++++ b/SHamonics.py	
+@@ -1,0 +1,43 @@
++import numpy as np
++import pandas as pd
++import matplotlib.pyplot as plt
++from scipy.special import sph_harm
++
++# Load CSV file (no headers)
++df = pd.read_csv("Positiondata.csv", header=None)
++
++# Extract longitude (λ) and latitude (φ)
++longitude = df[0].values  # Degrees
++latitude = df[1].values   # Degrees
++
++# Convert degrees to radians
++lon_rad = np.radians(longitude)
++lat_rad = np.radians(latitude)
++
++# Convert latitude (φ) to colatitude (θ)
++theta = np.pi / 2 - lat_rad  # θ = 90° - φ
++
++# Define degree (l) and order (m) for spherical harmonics
++l, m = 2, 1  # Example values
++
++# Compute spherical harmonics at data points
++Y_lm = sph_harm(m, l, lon_rad, theta)
++Y_magnitude = np.abs(Y_lm)  # Use absolute value for visualization
++Y_magnitude /= Y_magnitude.max()  # Normalize to [0,1]
++
++# Set up figure with mollweide projection
++fig = plt.figure(figsize=(10, 5))
++ax = fig.add_subplot(1, 1, 1, projection="mollweide")
++
++# Scatter plot of data points
++sc = ax.scatter(longitude, latitude, c=Y_magnitude, cmap="viridis", marker='o', edgecolor='black') # Convert lon/lat to Mollweide
++
++
++# Add colorbar
++cb = plt.colorbar(sc, ax=ax, orientation='vertical', label="Normalized Magnitude")
++
++# Title
++ax.set_title(f"Spherical Harmonic Y({l},{m}) at Data Points (Mollweide Projection)")
++
++# Show the plot
++plt.show()
+\ No newline at end of file
