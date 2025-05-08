@@ -157,7 +157,7 @@ def mollweide_plot(centroids, data, interpolator=None):
 
     # Add color bar (legend)
     cbar = fig.colorbar(sm, ax=ax, orientation='vertical', shrink=0.7, pad=0.1)
-    cbar.set_label('Instensity')
+    cbar.set_label('Intensity (GW/km^2)')
 
     ax.set_title('Voronoi Intensity on Mollweide Projection')
     plt.show()
