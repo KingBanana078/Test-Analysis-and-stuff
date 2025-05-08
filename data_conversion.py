@@ -231,41 +231,12 @@ if __name__ == "__main__":
 '''
 
 
-
-import numpy as np
-import csv
-
-# Load files
-lat_grid = np.loadtxt('lat.dat')
-lon_grid = np.loadtxt('lon.dat')
-
-print("Latitude grid shape:", lat_grid.shape)
-print("Longitude grid shape:", lon_grid.shape)
-
-# Flatten and combine
-lat_flat = lat_grid.flatten()
-lon_flat = lon_grid.flatten()
-combined = np.column_stack((lat_flat, lon_flat))
-
-# Save to CSV
-output_filename = 'latlon_grid.csv'
-with open(output_filename, 'w', newline='') as f:
-    writer = csv.writer(f)
-    writer.writerow(['Latitude', 'Longitude'])  # optional header
-    writer.writerows(combined)
-
-print(f"\nCSV written to: {output_filename}\n")
-
-# Print the contents of the file
-for row in combined:
-    print(f"{row[0]:.6f}, {row[1]:.6f}")
-
 import numpy as np
 import matplotlib.pyplot as plt
 
 # Load the latitudes and longitudes
-lat_grid = np.loadtxt('latitudes.dat')
-lon_grid = np.loadtxt('longitudes.dat')
+lat_grid = np.loadtxt('lat.dat')
+lon_grid = np.loadtxt('lon.dat')
 
 # Flatten the grids for easier plotting
 lat_flat = lat_grid.flatten()
