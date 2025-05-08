@@ -250,15 +250,16 @@ def main():
     plusminus45, poles, INTplusminus45, INTpoles = [], [], [], [] 
     N = min(len(points), len(intensity_unsorted))
     
+#use sqrt2/2 for +-45deg and sqrt3/2 for +-60 deg :
     for i in range(N):
-        if centroids[i,2] > math.sqrt(2)/2:
-            poles.append(centroids[i,2])
+        if points[i,2] > math.sqrt(2)/2:
+            poles.append(points[i,2])
             INTpoles.append(intensity_unsorted[i])
-        elif centroids[i,2] < - math.sqrt(2)/2:
-            poles.append(centroids[i,2])
+        elif points[i,2] < - math.sqrt(2)/2:
+            poles.append(points[i,2])
             INTpoles.append(intensity_unsorted[i])
         else:
-            plusminus45.append(centroids[i,2])
+            plusminus45.append(points[i,2])
             INTplusminus45.append(intensity_unsorted[i])
  
     totalintensity = sum(intensity_unsorted)
