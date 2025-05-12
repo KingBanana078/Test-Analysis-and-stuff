@@ -121,7 +121,7 @@ def interpolator_rbf(centroids, areas):
     areas = np.array(areas)
     densities = 1 / areas
 
-    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function='linear')
+    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function= 'Linear')
     #rbf = Rbf(x, y, z, densities, function='linear')  # 'linear', 'cubic', 'multiquadric', etc.
 
     return rbf
@@ -188,10 +188,10 @@ def main():
     filename = 'Positiondata.csv'
     hot_spots_data = read_csv(filename)
     powers, areas = read_power_area_csv()
-    powers = powers[:-2]
+    powers = powers
     areas = areas[:-2]
     temps = read_temp_csv()
-    points = transform_coordinates(hot_spots_data[:-2])
+    points = transform_coordinates(hot_spots_data)
     print(len(powers))
     mask = areas != 0
     r_io = 1821 #km
@@ -219,7 +219,7 @@ def main():
     interpolatorLog = interpolator_rbf(centroids, 1/intensity1log)
 
     mollweide_plot(centroids, intensity1, interpolator)
-    mollweide_plot(centroids, intensity1log, interpolatorLog)
+    #mollweide_plot(centroids, intensity1log, interpolatorLog)
     #print(intensity1)
 
 
