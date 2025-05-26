@@ -210,7 +210,7 @@ def rectangularPlot(centroids, data, interpolator=None):
     cbar = fig.colorbar(sm, ax=ax, orientation='vertical', shrink=0.7, pad=0.1)
     cbar.set_label('Density')
 
-    ax.set_title('Desnity Plot using DTFE ')
+    ax.set_title('Density Plot using DTFE ')
     plt.show()
 
 

@@ -188,10 +188,10 @@ def main():
     filename = 'Positiondata.csv'
     hot_spots_data = read_csv(filename)
     powers, areas = read_power_area_csv()
-    powers = powers
+    powers = powers[-2]
     areas = areas[:-2]
     temps = read_temp_csv()
-    points = transform_coordinates(hot_spots_data)
+    points = transform_coordinates(hot_spots_data[-2])
     print(len(powers))
     mask = areas != 0
     r_io = 1821 #km
