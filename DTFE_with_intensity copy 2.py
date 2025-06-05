@@ -6,7 +6,7 @@ from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator, Rbf
 from matplotlib import cm
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.colors as mcolors
-
+from scipy import stats
 def read_temp_csv():
     with open('Temperature.csv') as temp:
         reader = csv.reader(temp)
@@ -119,9 +119,7 @@ def interpolator_rbf(centroids, areas):
     #z = np.sin(phi)
 
     areas = np.array(areas)
-    densities = 1 / areas
-
-    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], densities, function= 'Linear')
+    rbf = Rbf(centroids[:, 0], centroids[:, 1], centroids[:, 2], areas, function='linear')
     #rbf = Rbf(x, y, z, densities, function='linear')  # 'linear', 'cubic', 'multiquadric', etc.
 
     return rbf
@@ -131,7 +129,7 @@ def mollweide_plot(centroids, data, interpolator=None):
     phi = np.radians(centroids[:, 1]) 
 
     fig = plt.figure(figsize=(10, 5))
-    ax = fig.add_subplot(111)
+    ax = fig.add_subplot(111, projection='mollweide')
     ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
     #ax.scatter(sv.vertices[:, 0], sv.vertices[:, 1], sv.vertices[:, 2], color='c', s=50, label='Sites')
 
@@ -163,6 +161,34 @@ def mollweide_plot(centroids, data, interpolator=None):
 
     ax.set_title('Voronoi Intensity on Mollweide Projection')
     plt.show()
+    
+def latlon_to_cartesian(lat_deg, lon_deg):
+    lat_rad = np.radians(lat_deg)
+    lon_rad = np.radians(180 - lon_deg)  # Adjust to match your system
+
+    x = np.cos(lat_rad) * np.cos(lon_rad)
+    y = np.cos(lat_rad) * np.sin(lon_rad)
+    z = np.sin(lat_rad)
+    return x, y, z
+
+    
+def compare_array(interpolator):
+    latitudes = np.loadtxt("lat.dat")
+    latitude_1D = latitudes.flatten()
+    longitudes = np.loadtxt("lon.dat")
+    longitude_1D = longitudes.flatten()
+    coordinates = np.column_stack((latitude_1D, longitude_1D))
+    #print(coordinates[2589,0])
+    lat_deg = coordinates[:,0]
+    lon_deg = coordinates[:,1]
+   # print(lat_deg)
+   # cartesian_values = np.array(latlon_to_cartesian(lat_deg, lon_deg))
+    cartesian_points = np.array([latlon_to_cartesian(lat, lon) for lat, lon in coordinates])
+
+    intensities = 1 / interpolator(cartesian_points[:,0], cartesian_points[:,1], cartesian_points[:,2])
+
+    return intensities
+    
 
 
 #----- INTENSITY ADJUSTMENTS START HERE -----#
@@ -188,10 +214,10 @@ def main():
     filename = 'Positiondata.csv'
     hot_spots_data = read_csv(filename)
     powers, areas = read_power_area_csv()
-    powers = powers[-2]
-    areas = areas[:-2]
+    #powers = powers[:-2]
+    #areas = areas[:-2]
     temps = read_temp_csv()
-    points = transform_coordinates(hot_spots_data[-2])
+    points = transform_coordinates(hot_spots_data)
     print(len(powers))
     mask = areas != 0
     r_io = 1821 #km
@@ -212,15 +238,42 @@ def main():
 
     centroids = compute_centroids(sv.vertices, sv.regions)
 
-    #interpolator = NearestNDInterpolator(centroids, intensity1)
+    interpolator = NearestNDInterpolator(centroids, intensity1)
     interpolator = interpolator_rbf(centroids, 1/intensity1)
 
-    #interpolatorLog = NearestNDInterpolator(centroids, intensity1log)
+    interpolatorLog = NearestNDInterpolator(centroids, intensity1log)
     interpolatorLog = interpolator_rbf(centroids, 1/intensity1log)
 
     mollweide_plot(centroids, intensity1, interpolator)
-    #mollweide_plot(centroids, intensity1log, interpolatorLog)
-    #print(intensity1)
+    mollweide_plot(centroids, intensity1log, interpolatorLog)
+    
+    results_comparison = compare_array(interpolator)
+    ast = np.loadtxt('asthenosphere.dat')
+    ast_long = ast.flatten()
+    
+    #print(ast_long.shape)
+    print(ast_long)
+    print(results_comparison.shape)
+    #ast_longlist = ast_long[:len(interpolated_longlist)]
+    
+    rho_ast, p_value_ast = stats.spearmanr(results_comparison, ast_long)
+    print(f'astenosphere is {rho_ast}, {p_value_ast}')
+    
+    deep_mantle = np.loadtxt("deep_mantle.dat")
+    deep_mantle_long = deep_mantle.flatten()
+    
+    rho_deep, p_deep = stats.spearmanr(results_comparison, deep_mantle_long)
+    
+    print(f'deep mantle is {rho_deep}, {p_deep}')
+    
+    magma = np.loadtxt('magma_ocean.dat')
+    magma_long = magma.flatten()
+    
+    rho_magma, p_magma = stats.spearmanr(results_comparison, magma_long)
+    print(f'magma_ocean is {rho_magma}, {p_magma}')
+    
+    
+
 
 
 
@@ -245,30 +298,108 @@ def main():
 
 #----- BELOW ARE CALCULATIONS ABOUT THE LATITUDINAL DISTRIBUTION OF VOLCANOES AND INTENSITIES -----#
 
-    intensity_unsorted = powers / areas_vor
+    '''
+    #intensity_unsorted = powers / areas_vor
     #intensity_unsorted = powers / areas_data
     plusminus45, poles, INTplusminus45, INTpoles = [], [], [], [] 
     N = min(len(points), len(intensity_unsorted))
     
-#use sqrt2/2 for +-45deg and sqrt3/2 for +-60 deg :
     for i in range(N):
-        if points[i,2] > math.sqrt(2)/2:
-            poles.append(points[i,2])
+        if centroids[i,2] > math.sqrt(2)/2:
+            poles.append(centroids[i,2])
             INTpoles.append(intensity_unsorted[i])
-        elif points[i,2] < - math.sqrt(2)/2:
-            poles.append(points[i,2])
+        elif centroids[i,2] < - math.sqrt(2)/2:
+            poles.append(centroids[i,2])
             INTpoles.append(intensity_unsorted[i])
         else:
-            plusminus45.append(points[i,2])
+            plusminus45.append(centroids[i,2])
             INTplusminus45.append(intensity_unsorted[i])
  
     totalintensity = sum(intensity_unsorted)
-    avgintensity = totalintensity/sum(areas_vor)
+    #avgintensity = totalintensity/sum(areas_vor)
     #avgintensity = totalintensity/sum(areas)
 
     print(totalintensity, avgintensity, sum(INTplusminus45), sum(INTpoles), sum(INTplusminus45)/totalintensity, sum(INTpoles)/totalintensity)
     print(len(plusminus45)/(len(plusminus45)+len(poles)), len(poles)/(len(plusminus45)+len(poles)))
+    '''
 
 
 if __name__ == "__main__":
     main()
+
+
+def evaluate_intensities(interpolator):
+    latitudes = np.loadtxt("lat.dat")
+    longitudes = np.loadtxt("lon.dat")
+    assert len(latitudes) == len(longitudes)
+
+    def latlon_to_cartesian(lat_deg, lon_deg):
+        lat_rad = np.radians(lat_deg)
+        lon_rad = np.radians(180 - lon_deg)
+        x = np.cos(lat_rad) * np.cos(lon_rad)
+        y = np.cos(lat_rad) * np.sin(lon_rad)
+        z = np.sin(lat_rad)
+        return x, y, z
+
+    cartesian_coords = np.array([latlon_to_cartesian(lat, lon) for lat, lon in zip(latitudes, longitudes)])
+
+    print(cartesian_coords)
+
+    # Don't redefine interpolator here
+    intensities = Rbf(cartesian_coords[:, 0], cartesian_coords[:, 1], cartesian_coords[:, 2], function='linear')
+    #intensities = interpolator(cartesian_coords[:, 0], cartesian_coords[:, 1], cartesian_coords[:, 2])
+    results = np.column_stack(intensities)
+    return results
+
+
+
+
+
+# CALL the function
+
+"""
+interpolated_longlist = interpolated.flatten()
+true_longlist = true.flatten()[0:2520]
+
+print(len(true_longlist))
+print(len(interpolated_longlist))
+variable = stats.spearmanr([interpolated_longlist],[true_longlist])
+print(variable.pvalue)"""
+
+
+
+"""
+
+interpolated = np.loadtxt("interpolated_intensities_full_36x72.dat")
+true = np.loadtxt("magma_ocean.dat")
+
+# Flatten the arrays to 1D (only if needed)
+interpolated_longlist = interpolated.flatten()
+true_longlist = true.flatten()
+
+# Make sure both arrays have the same length (adjust the size of one if needed)
+# For example, slice true_longlist to match the length of interpolated_longlist
+true_longlist = true_longlist[:len(interpolated_longlist)]
+
+# Check the lengths to avoid shape mismatch
+print("Length of interpolated:", len(interpolated_longlist))
+print("Length of true:", len(true_longlist))
+
+# Calculate Spearman rank correlation
+rho, p_value = stats.spearmanr(interpolated_longlist, true_longlist)
+print(rho)
+
+deep_mantle =np.loadtxt("deep_mantle.dat")
+deep_mantle_longlist = deep_mantle.flatten()
+deep_longlist = deep_mantle_longlist[:len(interpolated_longlist)]
+rho, p_value = stats.spearmanr(interpolated_longlist, deep_longlist)
+print(rho)
+
+ast = np.loadtxt('asthenosphere.dat')
+ast_long = ast.flatten()
+ast_longlist = ast_long[:len(interpolated_longlist)]
+rho, p_value = stats.spearmanr(interpolated_longlist, ast_longlist)
+print(rho)
+
+#loki_patera = 12.8 lattitude, 308.4 longitude
+#daszbog = 55.1 lattitude, 301.5 longitude"""
