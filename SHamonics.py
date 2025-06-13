@@ -28,13 +28,12 @@ density = np.zeros_like(lat_mesh)
 # gaussian kernel width (in radians)
 sigma = 0.1
 
-# compute great-circle distances and sum Gaussians
+# compute haversine distances and sum Gaussians
 for lon0, lat0 in zip(lon_rad, lat_rad):
-    delta_sigma = np.arccos(
-        np.sin(lat_mesh) * np.sin(lat0) +
-        np.cos(lat_mesh) * np.cos(lat0) * np.cos(lon_mesh - lon0)
-    )
-    density += np.exp(-(delta_sigma**2) / (2 * sigma**2))
+    a = np.sin((lat_mesh-lat0)/2) ** 2 + np.cos(lat0) * np.cos(lat_mesh) * np.sin((lon_mesh-lon0)/2) ** 2
+    d = 2.0 * np.arcsin(np.sqrt(a))
+    density += np.exp(-(d ** 2) / (2.0 * sigma ** 2))
+#np.arccos(np.sin(lat_mesh) * np.sin(lat0) +np.cos(lat_mesh) * np.cos(lat0) * np.cos(lon_mesh - lon0))
 
 # flip for pyshtools (lat: +90 to -90)
 density_flipped = np.flipud(density)
